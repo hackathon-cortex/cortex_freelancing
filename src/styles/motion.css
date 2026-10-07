@@ -1,0 +1,525 @@
+/* ============================================================
+   CORTEX FREELANCING — CENTRALIZED MOTION SYSTEM
+   Derived strictly from design.md & skills.md motion tokens
+   Inspired by Visuvate & Lil Boxes interaction standards
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. PRELOADER & INTRO SEQUENCING
+   ------------------------------------------------------------ */
+.cortex-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background-color: var(--color-surface-inverse);
+  color: var(--color-text-on-inverse);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 1000ms var(--motion-ease-exit),
+              visibility 1000ms var(--motion-ease-exit);
+}
+
+.cortex-preloader.finished {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.preloader-wordmark {
+  font-size: clamp(32px, 6vw, 64px);
+  font-weight: var(--font-weight-heading);
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.preloader-char {
+  display: inline-block;
+  animation: preloaderCharEnter 450ms var(--motion-ease-enter) forwards;
+  opacity: 0;
+  transform: translateY(100%);
+}
+
+.preloader-bar-wrap {
+  width: min(240px, 60vw);
+  height: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  margin-top: 24px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.preloader-bar {
+  height: 100%;
+  width: 0%;
+  background: var(--color-brand-primary);
+  animation: preloaderProgress 750ms var(--motion-ease-standard) forwards;
+}
+
+@keyframes preloaderCharEnter {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes preloaderProgress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+/* ------------------------------------------------------------
+   2. EDITORIAL TEXT REVEALS & KINETIC TYPOGRAPHY
+   ------------------------------------------------------------ */
+.reveal-line-mask,
+.kinetic-line-mask {
+  display: block;
+  overflow: hidden;
+  line-height: 1.12;
+  padding-bottom: 3px;
+}
+
+.reveal-line-inner {
+  display: block;
+  transform: translateY(110%);
+  opacity: 0;
+  transition: transform 650ms var(--motion-ease-enter),
+              opacity 650ms var(--motion-ease-enter);
+  will-change: transform, opacity;
+}
+
+.kinetic-line-inner {
+  display: block;
+  transform: translateY(120%) scale(1.05);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.kinetic-accent-word {
+  color: var(--color-brand-primary);
+  display: inline-block;
+  clip-path: inset(0 100% 0 0);
+  transform: translateY(120%) scale(1.08);
+  will-change: clip-path, transform, opacity;
+}
+
+.page-ready .reveal-line-inner {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.delay-0 { transition-delay: 0ms; }
+.delay-1 { transition-delay: 100ms; }
+.delay-2 { transition-delay: 200ms; }
+.delay-3 { transition-delay: 300ms; }
+.delay-4 { transition-delay: 400ms; }
+.delay-5 { transition-delay: 500ms; }
+.delay-6 { transition-delay: 600ms; }
+
+/* Pulse & Circuit Glows */
+@keyframes pulseCore {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.2); opacity: 1; }
+}
+
+@keyframes pulseParticle {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.4); }
+}
+
+.circuit-particle {
+  fill: var(--color-brand-primary);
+  filter: drop-shadow(0 0 5px var(--color-brand-primary));
+  opacity: 0.85;
+}
+
+
+/* ------------------------------------------------------------
+   3. SEAMLESS INFINITE MARQUEE
+   ------------------------------------------------------------ */
+.marquee-container {
+  overflow: hidden;
+  user-select: none;
+  display: flex;
+  width: 100%;
+  position: relative;
+}
+
+.marquee-track {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  white-space: nowrap;
+  animation: marqueeLoop 24s linear infinite;
+  will-change: transform;
+}
+
+.marquee-container:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marqueeLoop {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* ------------------------------------------------------------
+   4. VISUVATE-INSPIRED WORK SHOWCASE & HOLD-TO-EXPLORE
+   ------------------------------------------------------------ */
+.work-interactive-stage {
+  display: grid;
+  grid-template-columns: 1.4fr 0.9fr;
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+  align-items: stretch;
+}
+
+@media (max-width: 1023px) {
+  .work-interactive-stage {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+}
+
+.work-stage-visual-box {
+  background-color: #111111;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(var(--space-4), 4vw, var(--space-5));
+  cursor: pointer;
+  transition: box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+  perspective: 1000px;
+}
+
+.work-stage-visual-box:hover {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+
+/* Visual Depth Layer that reacts to mouse */
+.work-depth-layer {
+  position: absolute;
+  inset: -10px;
+  transition: transform 120ms ease-out;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.work-stage-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Press & Hold Progress Indicator */
+.hold-progress-indicator {
+  position: absolute;
+  bottom: var(--space-4);
+  right: var(--space-4);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.hold-ring-svg {
+  width: 22px;
+  height: 22px;
+  transform: rotate(-90deg);
+}
+
+.hold-ring-bg {
+  stroke: rgba(255, 255, 255, 0.2);
+}
+
+.hold-ring-progress {
+  stroke: var(--color-brand-primary);
+  transition: stroke-dashoffset 50ms linear;
+}
+
+/* Project Selector Rail (Visuvate style) */
+.work-selector-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.project-rail-item {
+  background-color: var(--color-surface-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-xs);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  position: relative;
+  transition: transform var(--motion-duration-fast) var(--motion-ease-standard),
+              border-color var(--motion-duration-fast) var(--motion-ease-standard),
+              background-color var(--motion-duration-fast) var(--motion-ease-standard);
+  text-align: left;
+}
+
+.project-rail-item:hover {
+  transform: translateX(4px);
+  border-color: var(--color-border-strong);
+}
+
+.project-rail-item.active {
+  background-color: #fcf9f7;
+  border-left: 4px solid var(--color-brand-primary);
+  border-color: var(--color-border-strong);
+}
+
+.rail-item-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.rail-item-title {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-heading);
+  color: var(--color-text-primary);
+}
+
+.project-rail-item.active .rail-item-title {
+  color: var(--color-text-primary);
+}
+
+.rail-item-copy {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------
+   5. PROGRESSIVE PROCESS TIMELINE LINE
+   ------------------------------------------------------------ */
+.process-interactive-wrap {
+  position: relative;
+}
+
+.process-connector-line {
+  position: absolute;
+  top: 40px;
+  left: 24px;
+  bottom: 40px;
+  width: 2px;
+  background: rgba(33, 33, 33, 0.1);
+  z-index: 0;
+}
+
+.process-connector-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: var(--color-brand-primary);
+  transition: height 400ms var(--motion-ease-standard);
+}
+
+/* ------------------------------------------------------------
+   6. CUSTOM CURSOR FOLLOWER (DESKTOP ONLY)
+   ------------------------------------------------------------ */
+.cortex-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 99998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  transition: width 200ms var(--motion-ease-standard),
+              height 200ms var(--motion-ease-standard),
+              opacity 200ms var(--motion-ease-standard),
+              background-color 200ms var(--motion-ease-standard);
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.cortex-cursor.default {
+  width: 10px;
+  height: 10px;
+  background-color: var(--color-brand-primary);
+  opacity: 0.6;
+}
+
+.cortex-cursor.hover {
+  width: 44px;
+  height: 44px;
+  background-color: rgba(33, 33, 33, 0.9);
+  color: #ffffff;
+  border: 1px solid var(--color-brand-primary);
+  opacity: 0.95;
+}
+
+.cortex-cursor.hold {
+  width: 60px;
+  height: 60px;
+  background-color: var(--color-brand-primary);
+  color: var(--color-text-on-brand);
+  opacity: 1;
+}
+
+.cursor-label {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  transition: opacity 150ms var(--motion-ease-standard);
+}
+
+.cortex-cursor.hover .cursor-label,
+.cortex-cursor.hold .cursor-label {
+  opacity: 1;
+}
+
+@media (hover: none), (pointer: coarse) {
+  .cortex-cursor {
+    display: none !important;
+  }
+}
+
+/* ------------------------------------------------------------
+   7. ACCORDION HEIGHT ANIMATION (GRID ZERO-TO-ONE)
+   ------------------------------------------------------------ */
+.faq-accordion-grid-anim {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms var(--motion-ease-standard);
+  overflow: hidden;
+}
+
+.faq-accordion-grid-anim.open {
+  grid-template-rows: 1fr;
+}
+
+.faq-accordion-inner {
+  min-height: 0;
+  opacity: 0;
+  transition: opacity 250ms var(--motion-ease-standard);
+}
+
+.faq-accordion-grid-anim.open .faq-accordion-inner {
+  opacity: 1;
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+/* ------------------------------------------------------------
+   8. BUSINESS WEBSITE BROWSER PREVIEW INTERACTION
+   ------------------------------------------------------------ */
+.browser-preview-frame {
+  background-color: #1a1a1a;
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  transition: transform var(--motion-duration-slow) var(--motion-ease-standard);
+}
+
+.browser-preview-frame:hover {
+  transform: translateY(-6px);
+}
+
+.browser-header-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background-color: #242424;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 11px;
+}
+
+.browser-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.browser-tab-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--motion-duration-instant);
+}
+
+.browser-tab-btn.active {
+  background: var(--color-brand-primary);
+  color: var(--color-text-on-brand);
+}
+
+/* ------------------------------------------------------------
+   9. MAGNETIC BUTTON SUBTLE HOVER
+   ------------------------------------------------------------ */
+.btn-magnetic {
+  transition: transform 150ms ease-out, background-color var(--motion-duration-instant);
+  will-change: transform;
+}
+
+/* ------------------------------------------------------------
+   10. REDUCED MOTION SAFETY
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .preloader-char,
+  .preloader-bar,
+  .reveal-line-inner,
+  .marquee-track,
+  .work-depth-layer,
+  .browser-preview-frame,
+  .cortex-cursor {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  .cortex-preloader {
+    display: none !important;
+  }
+}
