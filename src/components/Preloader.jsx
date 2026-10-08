@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { ChevronDown } from 'lucide-react';
 import { gsap, prefersReducedMotion } from '../animations/config';
 
 export default function Preloader({ onComplete }) {
@@ -7,20 +8,40 @@ export default function Preloader({ onComplete }) {
   const dotRef = useRef(null);
   const subtextRef = useRef(null);
   const barRef = useRef(null);
+  const scrollHintRef = useRef(null);
+  const dismissedRef = useRef(false);
 
   useEffect(() => {
     if (prefersReducedMotion()) {
+      if (containerRef.current) {
+        containerRef.current.style.display = 'none';
+      }
       onComplete?.();
       return;
     }
 
-    const tl = gsap.timeline({
-      onComplete: () => {
-        onComplete?.();
-      },
-    });
+    const dismiss = () => {
+      if (dismissedRef.current) return;
+      dismissedRef.current = true;
 
-    // Digital Boot Sequence (~1100ms total)
+      // Smooth slide-up exit transition
+      gsap.to(containerRef.current, {
+        clipPath: 'inset(0% 0% 100% 0%)',
+        opacity: 0,
+        duration: 0.65,
+        ease: 'power3.inOut',
+        onComplete: () => {
+          if (containerRef.current) {
+            containerRef.current.style.display = 'none';
+          }
+          onComplete?.();
+        }
+      });
+    };
+
+    // Digital Boot Sequence
+    const tl = gsap.timeline();
+
     tl.set(containerRef.current, { display: 'flex', opacity: 1 })
       .fromTo(
         markRef.current,
@@ -45,16 +66,70 @@ export default function Preloader({ onComplete }) {
         { width: '100%', duration: 0.45, ease: 'power2.inOut' },
         '-=0.1'
       )
-      .to(containerRef.current, {
-        clipPath: 'inset(0% 0% 100% 0%)',
-        opacity: 0,
-        duration: 0.45,
-        ease: 'power3.inOut',
-        delay: 0.05,
-      });
+      .fromTo(
+        scrollHintRef.current,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
+        '+=0.1'
+      );
+
+    // Scroll, touch, key, or click triggers dismissal
+    let isUserEngaged = false;
+
+    // Reset scroll to top on initial boot
+    window.scrollTo(0, 0);
+
+    const handleWheel = (e) => {
+      if (Math.abs(e.deltaY) > 2 || Math.abs(e.deltaX) > 2) {
+        dismiss();
+      }
+    };
+
+    let startTouchY = 0;
+    const handleTouchStart = (e) => {
+      if (e.touches && e.touches[0]) {
+        startTouchY = e.touches[0].clientY;
+        isUserEngaged = true;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches && e.touches[0]) {
+        const diff = Math.abs(e.touches[0].clientY - startTouchY);
+        if (diff > 6) {
+          dismiss();
+        }
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (['ArrowDown', 'PageDown', 'Space', 'Enter'].includes(e.key)) {
+        dismiss();
+      }
+    };
+
+    // Only listen to scroll after small delay to avoid browser scroll restoration triggering it
+    const scrollTimeout = setTimeout(() => {
+      const handleScroll = () => {
+        if (isUserEngaged || window.scrollY > 20) {
+          dismiss();
+        }
+      };
+      window.addEventListener('scroll', handleScroll, { passive: true });
+    }, 400);
+
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
       tl.kill();
+      clearTimeout(scrollTimeout);
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [onComplete]);
 
@@ -62,6 +137,21 @@ export default function Preloader({ onComplete }) {
     <aside
       ref={containerRef}
       className="cortex-preloader"
+      onClick={() => {
+        if (!dismissedRef.current) {
+          dismissedRef.current = true;
+          gsap.to(containerRef.current, {
+            clipPath: 'inset(0% 0% 100% 0%)',
+            opacity: 0,
+            duration: 0.65,
+            ease: 'power3.inOut',
+            onComplete: () => {
+              if (containerRef.current) containerRef.current.style.display = 'none';
+              onComplete?.();
+            }
+          });
+        }
+      }}
       style={{
         position: 'fixed',
         inset: 0,
@@ -73,8 +163,10 @@ export default function Preloader({ onComplete }) {
         alignItems: 'center',
         justifyContent: 'center',
         clipPath: 'inset(0% 0% 0% 0%)',
+        cursor: 'pointer',
+        userSelect: 'none'
       }}
-      aria-label="Loading Cortex Freelancing"
+      aria-label="Loading Cortex Freelancing. Scroll to enter."
       role="status"
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -135,6 +227,46 @@ export default function Preloader({ onComplete }) {
           }}
         />
       </div>
+
+      {/* Scroll indicator - prompts user to scroll */}
+      <div
+        ref={scrollHintRef}
+        style={{
+          marginTop: '44px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '8px',
+          opacity: 0,
+        }}
+      >
+        <span
+          style={{
+            fontSize: '10px',
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: 'rgba(255, 255, 255, 0.65)',
+            fontWeight: 700,
+          }}
+        >
+          Scroll to explore
+        </span>
+        <ChevronDown
+          size={16}
+          style={{
+            color: 'var(--color-brand-primary)',
+            animation: 'bounceHint 1.6s infinite ease-in-out',
+          }}
+          aria-hidden="true"
+        />
+      </div>
+
+      <style>{`
+        @keyframes bounceHint {
+          0%, 100% { transform: translateY(0); opacity: 0.6; }
+          50% { transform: translateY(5px); opacity: 1; }
+        }
+      `}</style>
     </aside>
   );
 }

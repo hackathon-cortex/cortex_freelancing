@@ -76,12 +76,22 @@
 /* ------------------------------------------------------------
    2. EDITORIAL TEXT REVEALS & KINETIC TYPOGRAPHY
    ------------------------------------------------------------ */
-.reveal-line-mask,
-.kinetic-line-mask {
+.reveal-line-mask {
   display: block;
   overflow: hidden;
   line-height: 1.12;
   padding-bottom: 3px;
+}
+
+.kinetic-line-mask {
+  display: block;
+  overflow: hidden;
+  line-height: 1.12;
+  padding-block: 0.12em;
+  padding-inline: 0.06em;
+  margin-block: -0.12em;
+  margin-inline: -0.06em;
+  white-space: nowrap;
 }
 
 .reveal-line-inner {
@@ -95,17 +105,15 @@
 
 .kinetic-line-inner {
   display: block;
-  transform: translateY(120%) scale(1.05);
-  opacity: 0;
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
+  white-space: nowrap;
   will-change: transform, opacity;
 }
 
 .kinetic-accent-word {
   color: var(--color-brand-primary);
   display: inline-block;
-  clip-path: inset(0 100% 0 0);
-  transform: translateY(120%) scale(1.08);
-  will-change: clip-path, transform, opacity;
 }
 
 .page-ready .reveal-line-inner {
@@ -357,69 +365,7 @@
 }
 
 /* ------------------------------------------------------------
-   6. CUSTOM CURSOR FOLLOWER (DESKTOP ONLY)
-   ------------------------------------------------------------ */
-.cortex-cursor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  z-index: 99998;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: translate(-50%, -50%);
-  transition: width 200ms var(--motion-ease-standard),
-              height 200ms var(--motion-ease-standard),
-              opacity 200ms var(--motion-ease-standard),
-              background-color 200ms var(--motion-ease-standard);
-  border-radius: 50%;
-  will-change: transform;
-}
 
-.cortex-cursor.default {
-  width: 10px;
-  height: 10px;
-  background-color: var(--color-brand-primary);
-  opacity: 0.6;
-}
-
-.cortex-cursor.hover {
-  width: 44px;
-  height: 44px;
-  background-color: rgba(33, 33, 33, 0.9);
-  color: #ffffff;
-  border: 1px solid var(--color-brand-primary);
-  opacity: 0.95;
-}
-
-.cortex-cursor.hold {
-  width: 60px;
-  height: 60px;
-  background-color: var(--color-brand-primary);
-  color: var(--color-text-on-brand);
-  opacity: 1;
-}
-
-.cursor-label {
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  opacity: 0;
-  transition: opacity 150ms var(--motion-ease-standard);
-}
-
-.cortex-cursor.hover .cursor-label,
-.cortex-cursor.hold .cursor-label {
-  opacity: 1;
-}
-
-@media (hover: none), (pointer: coarse) {
-  .cortex-cursor {
-    display: none !important;
-  }
-}
 
 /* ------------------------------------------------------------
    7. ACCORDION HEIGHT ANIMATION (GRID ZERO-TO-ONE)
@@ -495,28 +441,24 @@
 }
 
 /* ------------------------------------------------------------
-   9. MAGNETIC BUTTON SUBTLE HOVER
-   ------------------------------------------------------------ */
-.btn-magnetic {
-  transition: transform 150ms ease-out, background-color var(--motion-duration-instant);
-  will-change: transform;
-}
-
-/* ------------------------------------------------------------
    10. REDUCED MOTION SAFETY
    ------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
   .preloader-char,
   .preloader-bar,
   .reveal-line-inner,
+  .kinetic-line-inner,
   .marquee-track,
   .work-depth-layer,
-  .browser-preview-frame,
-  .cortex-cursor {
+  .browser-preview-frame {
     animation: none !important;
     transition: none !important;
     transform: none !important;
     opacity: 1 !important;
+  }
+
+  .kinetic-line-mask {
+    overflow: visible !important;
   }
 
   .cortex-preloader {

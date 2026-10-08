@@ -125,8 +125,7 @@ export default function ServicesSection() {
                       className="service-title"
                       style={{
                         margin: 0,
-                        color: isExpanded ? 'var(--color-brand-primary)' : 'var(--color-text-primary)',
-                        transition: 'color 200ms ease',
+                        color: 'var(--color-text-primary)',
                       }}
                     >
                       {service.title}
@@ -142,7 +141,7 @@ export default function ServicesSection() {
                       style={{
                         transform: isExpanded ? 'rotate(180deg)' : 'none',
                         transition: 'transform 250ms ease',
-                        color: isExpanded ? 'var(--color-brand-primary)' : 'var(--color-text-secondary)',
+                        color: 'var(--color-text-primary)',
                       }}
                       aria-hidden="true"
                     />

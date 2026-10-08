@@ -98,7 +98,7 @@
   --font-size-lg: 20px;
   --font-size-xl: 27px;
   --font-size-2xl: 40px;
-  --font-size-hero: clamp(44px, 7vw, 92px);
+  --font-size-hero: clamp(48px, 8vw, 96px);
 
   --line-height-body: 1.5;
   --line-height-heading: 1.05;
@@ -133,6 +133,8 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
@@ -140,6 +142,14 @@ body {
   background-color: var(--color-surface-page);
   color: var(--color-text-primary);
   overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+}
+
+.cortex-app-root {
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
 }
 
 /* Skip Link */
@@ -168,7 +178,10 @@ body {
   outline-offset: 2px;
 }
 
-[data-surface="inverse"] :focus-visible {
+[data-surface="inverse"] :focus-visible,
+.section-inverse :focus-visible,
+.card-inverse :focus-visible,
+.timeline-card :focus-visible {
   outline-color: var(--color-focus-ring-inverse);
 }
 
@@ -233,9 +246,12 @@ img, svg {
 }
 
 /* Section Rhythm */
-.section {
+.section,
+section[id],
+[id].section {
   padding-block: clamp(var(--space-6), 8vw, var(--space-7));
   position: relative;
+  scroll-margin-top: 80px;
 }
 
 .section-inverse {
@@ -359,13 +375,17 @@ img, svg {
 
 /* On inverse dark surfaces */
 .section-inverse .btn-secondary,
-[data-surface="inverse"] .btn-secondary {
+[data-surface="inverse"] .btn-secondary,
+.card-inverse .btn-secondary,
+.timeline-card .btn-secondary {
   color: var(--color-text-on-inverse);
   border-color: var(--color-white);
 }
 
 .section-inverse .btn-secondary:hover,
-[data-surface="inverse"] .btn-secondary:hover {
+[data-surface="inverse"] .btn-secondary:hover,
+.card-inverse .btn-secondary:hover,
+.timeline-card .btn-secondary:hover {
   background-color: var(--color-white);
   color: var(--color-black);
 }

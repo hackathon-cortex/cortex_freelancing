@@ -57,8 +57,10 @@ export default function TeamSection() {
                 <h3
                   className="team-name"
                   style={{
-                    color: isHovered ? 'var(--color-brand-primary)' : 'var(--color-text-primary)',
-                    transition: 'color 200ms ease',
+                    color: 'var(--color-text-primary)',
+                    textDecoration: isHovered ? 'underline' : 'none',
+                    textUnderlineOffset: '4px',
+                    transition: 'all 200ms ease',
                   }}
                 >
                   {member.name}

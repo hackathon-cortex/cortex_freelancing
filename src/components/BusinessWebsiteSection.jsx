@@ -22,7 +22,6 @@ const previewExamples = {
 
 export default function BusinessWebsiteSection() {
   const [activeTab, setActiveTab] = useState('startup');
-  const [btnOffset, setBtnOffset] = useState({ x: 0, y: 0 });
 
   const handleBuildWebsiteClick = () => {
     const el = document.getElementById('contact');
@@ -34,17 +33,6 @@ export default function BusinessWebsiteSection() {
         select.dispatchEvent(new Event('change', { bubbles: true }));
       }
     }
-  };
-
-  const handleBtnMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - (rect.left + rect.width / 2);
-    const y = e.clientY - (rect.top + rect.height / 2);
-    setBtnOffset({ x: x * 0.18, y: y * 0.18 });
-  };
-
-  const handleBtnMouseLeave = () => {
-    setBtnOffset({ x: 0, y: 0 });
   };
 
   const currentPreview = previewExamples[activeTab];
@@ -114,14 +102,8 @@ export default function BusinessWebsiteSection() {
 
             <button
               type="button"
-              className="btn btn-primary btn-magnetic"
-              style={{
-                transform: `translate3d(${btnOffset.x}px, ${btnOffset.y}px, 0)`
-              }}
-              onMouseMove={handleBtnMouseMove}
-              onMouseLeave={handleBtnMouseLeave}
+              className="btn btn-primary"
               onClick={handleBuildWebsiteClick}
-              data-cursor="explore"
             >
               Build My Website
               <ArrowRight size={16} className="btn-arrow" aria-hidden="true" />

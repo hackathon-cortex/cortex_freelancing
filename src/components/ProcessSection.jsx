@@ -3,35 +3,44 @@ import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { processSteps } from '../data/cortexData';
 import { gsap, ScrollTrigger, prefersReducedMotion } from '../animations/config';
 
+const phases = [
+  { name: 'Discover', span: [0, 1] },
+  { name: 'Design', span: [2, 2] },
+  { name: 'Build', span: [3, 4] },
+  { name: 'Launch & Support', span: [5, 7] }
+];
+
 export default function ProcessSection() {
-  const [activeStepIndex, setActiveStepIndex] = useState(2);
-  const containerRef = useRef(null);
-  const lineFillRef = useRef(null);
+  const isReduced = prefersReducedMotion();
+  const [activeStepIndex, setActiveStepIndex] = useState(isReduced ? 7 : 0);
+  const [scrollProgress, setScrollProgress] = useState(isReduced ? 1 : 0);
+  const sectionRef = useRef(null);
+  const pipelineRef = useRef(null);
+  const verticalRailRef = useRef(null);
 
   useEffect(() => {
-    if (prefersReducedMotion() || !containerRef.current) return;
+    if (prefersReducedMotion() || !pipelineRef.current) return;
 
-    // Scroll-linked progress line filling
-    const trigger = ScrollTrigger.create({
-      trigger: containerRef.current,
-      start: 'top 70%',
-      end: 'bottom 50%',
-      onUpdate: (self) => {
-        const progress = self.progress;
-        if (lineFillRef.current) {
-          lineFillRef.current.style.height = `${progress * 100}%`;
+    const ctx = gsap.context(() => {
+      // Desktop Scrub
+      ScrollTrigger.create({
+        trigger: pipelineRef.current,
+        start: 'top 75%',
+        end: 'bottom 45%',
+        scrub: 0.5,
+        onUpdate: (self) => {
+          const prog = self.progress;
+          setScrollProgress(prog);
+          const currentStep = Math.min(
+            processSteps.length - 1,
+            Math.floor(prog * processSteps.length)
+          );
+          setActiveStepIndex(currentStep);
         }
-        const calculatedIndex = Math.min(
-          processSteps.length - 1,
-          Math.floor(progress * processSteps.length)
-        );
-        setActiveStepIndex(calculatedIndex);
-      },
-    });
+      });
+    }, pipelineRef);
 
-    return () => {
-      trigger.kill();
-    };
+    return () => ctx.revert();
   }, []);
 
   const scrollToContact = () => {
@@ -59,115 +68,185 @@ export default function ProcessSection() {
           </p>
         </div>
 
-        {/* Scroll-Reactive Pipeline Grid */}
-        <div ref={containerRef} style={{ position: 'relative' }}>
-          {/* Background Connector Progress Line */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '20px',
-              left: '20px',
-              bottom: '20px',
-              width: '2px',
-              backgroundColor: 'rgba(33, 33, 33, 0.1)',
-              display: 'none', // Active on desktop pipeline view if needed
-            }}
-          >
-            <div
-              ref={lineFillRef}
-              style={{
-                width: '100%',
-                height: '0%',
-                backgroundColor: 'var(--color-brand-primary)',
-                transition: 'height 150ms linear',
-              }}
-            />
+        {/* =========================================================================
+            DESKTOP HORIZONTAL PIPELINE (≥1024px)
+           ========================================================================= */}
+        <div ref={pipelineRef} className="desktop-pipeline-wrapper" aria-hidden="false">
+          {/* Phase Bracket Groupings Above/Below Track */}
+          <div className="pipeline-phases-header" aria-hidden="true">
+            {phases.map((phase) => (
+              <div
+                key={phase.name}
+                className="pipeline-phase-tag"
+                style={{
+                  gridColumn: `${phase.span[0] + 1} / span ${phase.span[1] - phase.span[0] + 1}`
+                }}
+              >
+                <span className="phase-tag-bracket">[</span>
+                <span className="phase-tag-name">{phase.name}</span>
+                <span className="phase-tag-bracket">]</span>
+              </div>
+            ))}
           </div>
 
-          <div className="process-grid" role="list">
+          {/* Central Track & Alternating Cards Container */}
+          <div className="desktop-pipeline-grid">
             {processSteps.map((step, index) => {
-              const isSelected = activeStepIndex === index;
-              const isCompleted = index < activeStepIndex;
+              const isEven = index % 2 === 0; // Even: Above track, Odd: Below track
+              const isDone = index < activeStepIndex || (isReduced && index <= 7);
+              const isActive = index === activeStepIndex && !isReduced;
+              const isPending = index > activeStepIndex && !isReduced;
 
               return (
                 <div
                   key={step.number}
-                  className={`process-step-card ${isSelected ? 'active' : ''}`}
-                  onClick={() => setActiveStepIndex(index)}
-                  onMouseEnter={() => setActiveStepIndex(index)}
-                  style={{
-                    borderLeft: isSelected
-                      ? '4px solid var(--color-brand-primary)'
-                      : '1px solid var(--color-border-subtle)',
-                    backgroundColor: isSelected ? '#faf5f3' : 'var(--color-surface-card)',
-                    transform: isSelected ? 'translateY(-4px)' : 'none',
-                    cursor: 'pointer',
-                    transition: 'all 200ms ease',
-                    boxShadow: isSelected ? '0 10px 30px rgba(0, 0, 0, 0.08)' : 'var(--shadow-1)',
-                  }}
-                  role="listitem"
-                  tabIndex="0"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setActiveStepIndex(index);
-                    }
-                  }}
-                  aria-label={`Step ${step.number}: ${step.title}`}
-                  data-cursor="explore"
+                  className={`pipeline-slot ${isEven ? 'slot-top' : 'slot-bottom'}`}
+                  style={{ gridColumn: index + 1 }}
                 >
+                  {/* Step Card */}
                   <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '8px',
-                    }}
+                    className={`pipeline-card ${isActive ? 'is-active' : ''} ${isDone ? 'is-done' : ''}`}
+                    tabIndex="0"
+                    role="region"
+                    aria-label={`Step ${step.number}: ${step.title}`}
+                    onFocus={() => setActiveStepIndex(index)}
+                    onClick={() => setActiveStepIndex(index)}
                   >
-                    <span
-                      className="process-step-num"
-                      style={{
-                        transform: isSelected ? 'scale(1.1)' : 'none',
-                        transition: 'transform 200ms ease',
-                      }}
-                      aria-hidden="true"
-                    >
-                      {step.number}
-                    </span>
-                    {isCompleted ? (
-                      <CheckCircle2
-                        size={18}
-                        style={{ color: 'var(--color-brand-primary)' }}
-                        aria-hidden="true"
-                      />
-                    ) : (
-                      <span
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          backgroundColor: isSelected
-                            ? 'var(--color-brand-primary)'
-                            : 'rgba(33, 33, 33, 0.2)',
-                          transition: 'background-color 200ms ease',
-                        }}
-                      />
-                    )}
+                    <div className="pipeline-card-header">
+                      <span className="pipeline-card-num">{step.number}</span>
+                      {isDone ? (
+                        <CheckCircle2
+                          size={16}
+                          style={{ color: 'var(--color-brand-primary)' }}
+                          aria-hidden="true"
+                        />
+                      ) : isActive ? (
+                        <span className="pipeline-status-pulse" aria-hidden="true" />
+                      ) : (
+                        <span className="pipeline-status-pending" aria-hidden="true" />
+                      )}
+                    </div>
+                    <h3 className="pipeline-card-title">{step.title}</h3>
+                    <p className="pipeline-card-desc">{step.description}</p>
                   </div>
 
-                  <h3
-                    className="process-step-title"
-                    style={{
-                      color: isSelected ? 'var(--color-brand-primary)' : 'inherit',
-                      transition: 'color 200ms ease',
-                    }}
-                  >
-                    {step.title}
-                  </h3>
+                  {/* Connecting Stem to Track */}
+                  <div className={`pipeline-stem ${isEven ? 'stem-down' : 'stem-up'}`} aria-hidden="true">
+                    <span className={`pipeline-stem-line ${isDone || isActive ? 'active' : ''}`} />
+                  </div>
 
-                  <p className="process-step-desc">
-                    {step.description}
-                  </p>
+                  {/* Track Node on the horizontal axis */}
+                  <div
+                    className={`pipeline-track-node ${isDone ? 'node-done' : ''} ${isActive ? 'node-active' : ''} ${isPending ? 'node-pending' : ''}`}
+                    aria-hidden="true"
+                  >
+                    {isDone ? (
+                      <CheckCircle2 size={14} className="node-icon-check" />
+                    ) : (
+                      <span className="node-dot" />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Continuous Horizontal Line Rail Behind Nodes */}
+            <div className="desktop-track-rail" aria-hidden="true">
+              <div
+                className="desktop-track-rail-fill"
+                style={{ width: `${Math.min(100, Math.max(0, scrollProgress * 100))}%` }}
+              />
+              {/* Traveling Data Packet Dot */}
+              {!isReduced && (
+                <div
+                  className="pipeline-data-packet"
+                  style={{
+                    left: `${Math.min(100, Math.max(0, scrollProgress * 100))}%`,
+                    opacity: scrollProgress > 0.02 && scrollProgress < 0.98 ? 1 : 0
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* =========================================================================
+            TABLET & MOBILE VERTICAL PIPELINE (<1024px)
+           ========================================================================= */}
+        <div ref={verticalRailRef} className="mobile-pipeline-wrapper">
+          {/* Vertical Track Rail */}
+          <div className="mobile-track-rail" aria-hidden="true">
+            <div
+              className="mobile-track-rail-fill"
+              style={{ height: `${Math.min(100, Math.max(0, scrollProgress * 100))}%` }}
+            />
+            {!isReduced && (
+              <div
+                className="mobile-data-packet"
+                style={{
+                  top: `${Math.min(100, Math.max(0, scrollProgress * 100))}%`,
+                  opacity: scrollProgress > 0.02 && scrollProgress < 0.98 ? 1 : 0
+                }}
+              />
+            )}
+          </div>
+
+          <div className="mobile-pipeline-list">
+            {processSteps.map((step, index) => {
+              const isDone = index < activeStepIndex || (isReduced && index <= 7);
+              const isActive = index === activeStepIndex && !isReduced;
+              const isPending = index > activeStepIndex && !isReduced;
+
+              // Find phase label if this is start of phase
+              const phase = phases.find(p => p.span[0] === index);
+
+              return (
+                <div key={step.number} className="mobile-pipeline-row">
+                  {phase && (
+                    <div className="mobile-phase-badge" aria-hidden="true">
+                      <span>[{phase.name.toUpperCase()}]</span>
+                    </div>
+                  )}
+
+                  <div className="mobile-pipeline-item">
+                    {/* Node on Vertical Rail */}
+                    <div
+                      className={`pipeline-track-node ${isDone ? 'node-done' : ''} ${isActive ? 'node-active' : ''} ${isPending ? 'node-pending' : ''}`}
+                      aria-hidden="true"
+                    >
+                      {isDone ? (
+                        <CheckCircle2 size={14} className="node-icon-check" />
+                      ) : (
+                        <span className="node-dot" />
+                      )}
+                    </div>
+
+                    {/* Step Card to the Right */}
+                    <div
+                      className={`pipeline-card mobile-card ${isActive ? 'is-active' : ''} ${isDone ? 'is-done' : ''}`}
+                      tabIndex="0"
+                      role="region"
+                      aria-label={`Step ${step.number}: ${step.title}`}
+                      onClick={() => setActiveStepIndex(index)}
+                    >
+                      <div className="pipeline-card-header">
+                        <span className="pipeline-card-num">{step.number}</span>
+                        {isDone ? (
+                          <CheckCircle2
+                            size={16}
+                            style={{ color: 'var(--color-brand-primary)' }}
+                            aria-hidden="true"
+                          />
+                        ) : isActive ? (
+                          <span className="pipeline-status-pulse" aria-hidden="true" />
+                        ) : (
+                          <span className="pipeline-status-pending" aria-hidden="true" />
+                        )}
+                      </div>
+                      <h3 className="pipeline-card-title">{step.title}</h3>
+                      <p className="pipeline-card-desc">{step.description}</p>
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -175,14 +254,13 @@ export default function ProcessSection() {
         </div>
 
         {/* Section CTA */}
-        <div style={{ textAlign: 'center', marginTop: '24px' }}>
+        <div style={{ textAlign: 'center', marginTop: '48px' }}>
           <button
             type="button"
             className="btn btn-primary"
             onClick={scrollToContact}
-            data-cursor="explore"
           >
-            Start a Project With Cortex
+            Start a project
             <ArrowRight size={16} className="btn-arrow" aria-hidden="true" />
           </button>
         </div>

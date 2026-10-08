@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Mail, Phone, MapPin, Github, Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { cortexBrand, projectTypeOptions } from '../data/cortexData';
-import { initMagnetic } from '../animations/magnetic';
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({
@@ -22,13 +21,6 @@ export default function ContactSection() {
   const [status, setStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const submitBtnRef = useRef(null);
-
-  useEffect(() => {
-    if (submitBtnRef.current) {
-      const cleanup = initMagnetic(submitBtnRef.current, 8);
-      return cleanup;
-    }
-  }, [status]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -530,7 +522,7 @@ export default function ContactSection() {
                   />
                 </div>
 
-                {/* Magnetic Submit Action */}
+                {/* Primary Submit Action */}
                 <div style={{ marginTop: '16px' }}>
                   <button
                     ref={submitBtnRef}

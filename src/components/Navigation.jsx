@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import { cortexBrand } from '../data/cortexData';
-import { initMagnetic } from '../animations/magnetic';
 
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -13,14 +12,6 @@ export default function Navigation() {
   const drawerRef = useRef(null);
   const ctaBtnRef = useRef(null);
   const linksContainerRef = useRef(null);
-
-  useEffect(() => {
-    // Apply magnetic hover to nav CTA
-    if (ctaBtnRef.current) {
-      const cleanup = initMagnetic(ctaBtnRef.current, 6);
-      return cleanup;
-    }
-  }, []);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -145,7 +136,7 @@ export default function Navigation() {
             </a>
 
             {/* Desktop Links with Sliding Active Indicator */}
-            <div style={{ position: 'relative' }}>
+            <div className="nav-desktop-wrap" style={{ position: 'relative' }}>
               <ul ref={linksContainerRef} className="nav-desktop-links" role="list">
                 {navLinks.map((link) => (
                   <li key={link.id}>
@@ -177,16 +168,15 @@ export default function Navigation() {
               />
             </div>
 
-            {/* Nav Actions with Magnetic CTA */}
+            {/* Nav Actions with Primary CTA */}
             <div className="nav-actions">
               <a
                 ref={ctaBtnRef}
                 href="#contact"
                 className="btn btn-primary btn-desktop-cta"
                 onClick={(e) => handleLinkClick(e, '#contact')}
-                data-cursor="explore"
               >
-                Start a Project
+                Start a project
                 <ArrowRight size={16} className="btn-arrow" aria-hidden="true" />
               </a>
 
@@ -258,7 +248,7 @@ export default function Navigation() {
             className="btn btn-primary"
             onClick={(e) => handleLinkClick(e, '#contact')}
           >
-            Start a Project
+            Start a project
             <ArrowRight size={16} className="btn-arrow" aria-hidden="true" />
           </a>
           <span className="form-hint" style={{ textAlign: 'center' }}>

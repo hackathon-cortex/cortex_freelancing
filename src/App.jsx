@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import Preloader from './components/Preloader';
-import CustomCursor from './components/CustomCursor';
 import Navigation from './components/Navigation';
 import HeroSection from './components/HeroSection';
 import CapabilityStrip from './components/CapabilityStrip';
@@ -38,9 +37,6 @@ export default function App() {
     <div className={`cortex-app-root ${pageReady ? 'page-ready' : ''}`}>
       {/* Fast Intro Preloader */}
       <Preloader onComplete={() => setPageReady(true)} />
-
-      {/* Desktop Contextual Custom Cursor */}
-      <CustomCursor />
 
       {/* Accessible Skip Link */}
       <a href="#main-content" className="skip-link">

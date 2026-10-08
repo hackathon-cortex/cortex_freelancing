@@ -3,14 +3,12 @@ import { ArrowRight, ExternalLink, ChevronUp, ChevronDown, Sparkles } from 'luci
 import { selectedProjects } from '../data/cortexData';
 import CaseStudyModal from './CaseStudyModal';
 import { gsap, ScrollTrigger, prefersReducedMotion } from '../animations/config';
-import { initMagnetic } from '../animations/magnetic';
 
 export default function WorkSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [activeModalProject, setActiveModalProject] = useState(null);
   const [holdProgress, setHoldProgress] = useState(0); // 0 to 100
   const [isHolding, setIsHolding] = useState(false);
-  const [mouseTilt, setMouseTilt] = useState({ x: 0, y: 0 });
 
   const sectionRef = useRef(null);
   const stageRef = useRef(null);
@@ -23,14 +21,6 @@ export default function WorkSection() {
 
   const projects = selectedProjects.slice(0, 4);
   const currentProject = projects[activeIndex] || projects[0];
-
-  // Primary CTA Magnetic effect
-  useEffect(() => {
-    if (ctaBtnRef.current) {
-      const cleanup = initMagnetic(ctaBtnRef.current, 8);
-      return cleanup;
-    }
-  }, [activeIndex]);
 
   // Handle Project Change with choreographed title & metadata animation
   const goToProject = useCallback((newIndex) => {
@@ -131,19 +121,6 @@ export default function WorkSection() {
       if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current);
     };
   }, [isHolding, currentProject]);
-
-  // Pointer Depth Tilt on Active Card
-  const handleCardMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
-    const y = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
-    setMouseTilt({ x: x * 6, y: -y * 6 });
-  };
-
-  const handleCardMouseLeave = () => {
-    setMouseTilt({ x: 0, y: 0 });
-    setIsHolding(false);
-  };
 
   // Keyboard navigation for accessibility
   const handleKeyDown = (e) => {
@@ -354,8 +331,8 @@ export default function WorkSection() {
                 let pointerEvents = 'none';
 
                 if (diff === 0) {
-                  // Active Card: Front and dominant with interactive 3D pointer tilt
-                  transformStyle = `translate3d(0, 0, 0) scale(${isHolding ? 1.025 : 1}) rotateX(${mouseTilt.y}deg) rotateY(${mouseTilt.x}deg) rotate(0deg)`;
+                  // Active Card: Front and dominant
+                  transformStyle = `translate3d(0, 0, 0) scale(${isHolding ? 1.025 : 1}) rotate(0deg)`;
                   opacity = 1;
                   zIndex = 10;
                   pointerEvents = 'auto';
@@ -402,13 +379,10 @@ export default function WorkSection() {
                         goToProject(idx);
                       }
                     }}
-                    onMouseMove={isActive ? handleCardMouseMove : undefined}
-                    onMouseLeave={isActive ? handleCardMouseLeave : undefined}
                     onMouseDown={isActive ? () => setIsHolding(true) : undefined}
                     onMouseUp={isActive ? () => setIsHolding(false) : undefined}
                     onTouchStart={isActive ? () => setIsHolding(true) : undefined}
                     onTouchEnd={isActive ? () => setIsHolding(false) : undefined}
-                    data-cursor={isActive ? 'hold' : 'view'}
                     role="button"
                     tabIndex={isActive ? 0 : -1}
                     aria-label={`Project 0${idx + 1}: ${project.name} - ${isActive ? 'Active. Hold to explore or click for details' : 'Click to bring to front'}`}

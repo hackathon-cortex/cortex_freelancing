@@ -1,301 +1,168 @@
-import React, { useEffect, useRef } from 'react';
-import { ArrowRight, Cpu, Globe, Workflow, ShieldCheck, Sparkles } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ArrowRight, Sparkles, Layers, CheckCircle2, Terminal, BarChart2, MessageSquare } from 'lucide-react';
 import { cortexBrand } from '../data/cortexData';
 import { gsap, ScrollTrigger, prefersReducedMotion } from '../animations/config';
-import { initMagnetic } from '../animations/magnetic';
 
 export default function HeroSection() {
   const heroRef = useRef(null);
   const contentRef = useRef(null);
   const badgeRef = useRef(null);
-  const badgeDotRef = useRef(null);
   const line1Ref = useRef(null);
   const line2Ref = useRef(null);
   const line3Ref = useRef(null);
   const descRef = useRef(null);
   const ctasRef = useRef(null);
-  const ctaBtnRef = useRef(null);
   const capRef = useRef(null);
 
-  // System visual refs
-  const visualRef = useRef(null);
-  const gridLayerRef = useRef(null);
-  const svgPathsRef = useRef([]);
-  const coreRef = useRef(null);
-  const nodesRef = useRef([]);
-  const chipsRef = useRef([]);
+  // Idea -> Solution Morph Canvas Refs
+  const canvasCardRef = useRef(null);
+  const wireframeSvgRef = useRef(null);
+  const filledUiRef = useRef(null);
+  const chipsLayerRef = useRef(null);
+  const loopTlRef = useRef(null);
 
-  // Magnetic button on primary CTA
+  // Entrance Timeline & Looping Canvas
   useEffect(() => {
-    if (ctaBtnRef.current) {
-      const cleanup = initMagnetic(ctaBtnRef.current, 10);
-      return cleanup;
-    }
-  }, []);
+    const isReduced = prefersReducedMotion();
 
-  // Master Motion Timeline & Parallax
-  useEffect(() => {
-    if (prefersReducedMotion()) return;
-
-    // ------------------------------------------------------------
-    // 01 & 02: CHOREOGRAPHED FRONT-PAGE TIMELINE
-    // ------------------------------------------------------------
-    const tl = gsap.timeline({
-      delay: 0.15,
-      defaults: { ease: 'power3.out' },
-    });
-
-    // 0.2s: Cortex mark badge with assembled dot & tracking
-    tl.fromTo(
-      badgeRef.current,
-      { opacity: 0, scale: 0.92, letterSpacing: '0.22em', y: 15 },
-      { opacity: 1, scale: 1, letterSpacing: '0.12em', y: 0, duration: 0.45, ease: 'power3.out' }
-    )
-      .fromTo(
-        badgeDotRef.current,
-        { scale: 0, x: -14, opacity: 0 },
-        { scale: 1, x: 0, opacity: 1, duration: 0.35, ease: 'back.out(2)' },
-        '-=0.25'
-      )
-
-      // 0.4s: Digital grid structure & crosshairs reveal
-      .fromTo(
-        gridLayerRef.current,
-        { opacity: 0 },
-        { opacity: 0.8, duration: 0.5, ease: 'power2.inOut' },
-        '-=0.2'
-      )
-
-      // 0.6s: Kinetic Typography (Line 1: TURNING IDEAS)
-      .fromTo(
-        line1Ref.current,
-        { y: '120%', scale: 1.05, opacity: 0 },
-        { y: '0%', scale: 1, opacity: 1, duration: 0.65, ease: 'expo.out' },
-        '-=0.25'
-      )
-
-      // Kinetic Typography (Line 2: INTO)
-      .fromTo(
-        line2Ref.current,
-        { y: '120%', scale: 1.05, opacity: 0 },
-        { y: '0%', scale: 1, opacity: 1, duration: 0.6, ease: 'expo.out' },
-        '-=0.45'
-      )
-
-      // 0.8s: Accent Word (Line 3: DIGITAL SOLUTIONS with clip-path wipe)
-      .fromTo(
-        line3Ref.current,
-        {
-          clipPath: 'inset(0 100% 0 0)',
-          scale: 1.08,
-          y: '120%',
-          opacity: 0,
-        },
-        {
-          clipPath: 'inset(0 0% 0 0)',
-          scale: 1,
-          y: '0%',
-          opacity: 1,
-          duration: 0.75,
-          ease: 'expo.out',
-        },
-        '-=0.4'
-      )
-
-      // 1.0s: Cortex Intelligence System visual builds itself
-      .fromTo(
-        visualRef.current,
-        { opacity: 0, scale: 0.94, y: 25 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.65, ease: 'power3.out' },
-        '-=0.5'
-      )
-
-      // Central Core nucleus expands & activates
-      .fromTo(
-        coreRef.current,
-        { scale: 0, opacity: 0, rotate: -30 },
-        { scale: 1, opacity: 1, rotate: 0, duration: 0.65, ease: 'back.out(1.5)' },
-        '-=0.45'
-      )
-
-      // Connecting SVG lines draw themselves via strokeDashoffset
-      .fromTo(
-        svgPathsRef.current.filter(Boolean),
-        { strokeDashoffset: 500, opacity: 0.2 },
-        { strokeDashoffset: 0, opacity: 1, stagger: 0.08, duration: 0.8, ease: 'power2.inOut' },
-        '-=0.4'
-      )
-
-      // Satellite system nodes emerge sequentially
-      .fromTo(
-        nodesRef.current.filter(Boolean),
-        { scale: 0.85, opacity: 0, y: 15 },
-        { scale: 1, opacity: 1, y: 0, stagger: 0.09, duration: 0.5, ease: 'power3.out' },
-        '-=0.55'
-      )
-
-      // HUD Telemetry chips activate
-      .fromTo(
-        chipsRef.current.filter(Boolean),
-        { opacity: 0, y: -10 },
-        { opacity: 1, y: 0, stagger: 0.1, duration: 0.45, ease: 'power2.out' },
-        '-=0.35'
-      )
-
-      // 1.3s: Supporting editorial copy emerges
-      .fromTo(
-        descRef.current,
-        { y: 20, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' },
-        '-=0.45'
-      )
-
-      // 1.5s: Primary CTAs
-      .fromTo(
-        ctasRef.current?.children || [],
-        { y: 15, opacity: 0 },
-        { y: 0, opacity: 1, stagger: 0.1, duration: 0.45, ease: 'power2.out' },
-        '-=0.35'
-      )
-
-      // 1.8s: Micro-motion continuous indicator
-      .fromTo(
-        capRef.current,
-        { opacity: 0, y: 10 },
-        { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' },
-        '-=0.2'
-      );
-
-    // ------------------------------------------------------------
-    // 15 & 16: LAYERED PARALLAX WITH POINTER MOVEMENT (5 DEPTH PLANES)
-    // ------------------------------------------------------------
-    const handleMouseMove = (e) => {
-      if (!visualRef.current) return;
-      const rect = heroRef.current?.getBoundingClientRect();
-      if (!rect) return;
-      const x = (e.clientX - (rect.left + rect.width / 2)) / (rect.width / 2);
-      const y = (e.clientY - (rect.top + rect.height / 2)) / (rect.height / 2);
-
-      // Layer 1: Background grid & crosshairs (2-3px)
-      if (gridLayerRef.current) {
-        gsap.to(gridLayerRef.current, {
-          x: x * 3,
-          y: y * 3,
-          duration: 0.4,
-          ease: 'power1.out',
-        });
-      }
-
-      // Layer 2: Main visual card 3D tilt (5px)
-      gsap.to(visualRef.current, {
-        rotateY: x * 4.5,
-        rotateX: -y * 4.5,
-        duration: 0.5,
-        ease: 'power1.out',
+    const ctx = gsap.context(() => {
+      // 1. Entrance timeline for left column typography
+      const entranceTl = gsap.timeline({
+        delay: 0.15,
+        defaults: { ease: 'power3.out' }
       });
 
-      // Layer 3: Central Core (8px)
-      if (coreRef.current) {
-        gsap.to(coreRef.current, {
-          x: x * 8,
-          y: y * 6,
-          duration: 0.45,
-          ease: 'power1.out',
-        });
+      if (!isReduced) {
+        entranceTl
+          .fromTo(badgeRef.current, { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.5 })
+          .fromTo(
+            [line1Ref.current, line2Ref.current, line3Ref.current],
+            { y: '105%', opacity: 0 },
+            {
+              y: '0%',
+              opacity: 1,
+              duration: 0.7,
+              stagger: 0.12,
+              clearProps: 'transform,clipPath'
+            },
+            '-=0.25'
+          )
+          .fromTo(descRef.current, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.2')
+          .fromTo(ctasRef.current, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.5 }, '-=0.2')
+          .fromTo(capRef.current, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4 }, '-=0.2')
+          .fromTo(canvasCardRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7 }, '-=0.6');
+      } else {
+        gsap.set(
+          [
+            badgeRef.current,
+            line1Ref.current,
+            line2Ref.current,
+            line3Ref.current,
+            descRef.current,
+            ctasRef.current,
+            capRef.current,
+            canvasCardRef.current
+          ],
+          { opacity: 1, y: 0, clearProps: 'transform,clipPath' }
+        );
       }
 
-      // Layer 4: Satellite Nodes (12px)
-      nodesRef.current.filter(Boolean).forEach((nodeEl, idx) => {
-        const factor = idx % 2 === 0 ? 1 : -0.7;
-        gsap.to(nodeEl, {
-          x: x * 12 * factor,
-          y: y * 9 * factor,
-          duration: 0.5,
-          ease: 'power1.out',
-        });
-      });
+      // 2. Looping "Idea -> Solution" Morph Animation (~8s cycle)
+      if (!isReduced && wireframeSvgRef.current && filledUiRef.current && chipsLayerRef.current) {
+        const wirePaths = wireframeSvgRef.current.querySelectorAll('.wire-path');
+        const filledElements = filledUiRef.current;
+        const chips = chipsLayerRef.current.querySelectorAll('.morph-floating-chip');
 
-      // Layer 5: Floating HUD Chips (16px)
-      chipsRef.current.filter(Boolean).forEach((chipEl, idx) => {
-        const factor = idx === 0 ? -1 : 1;
-        gsap.to(chipEl, {
-          x: x * 16 * factor,
-          y: y * 12 * factor,
-          duration: 0.55,
-          ease: 'power1.out',
+        // Master 8s looping timeline
+        const loopTl = gsap.timeline({
+          repeat: -1,
+          repeatDelay: 1.2
         });
-      });
+        loopTlRef.current = loopTl;
 
-      // Counter-balance Parallax on Left Typography (-3px) for Optical Symmetry
-      if (contentRef.current) {
-        gsap.to(contentRef.current, {
-          x: x * -3,
-          y: y * -2,
-          duration: 0.6,
-          ease: 'power1.out',
-        });
-      }
-    };
-
-    const handleMouseLeave = () => {
-      gsap.to(
-        [
-          visualRef.current,
-          gridLayerRef.current,
-          coreRef.current,
-          contentRef.current,
-          ...nodesRef.current.filter(Boolean),
-          ...chipsRef.current.filter(Boolean),
-        ],
-        {
-          rotateX: 0,
-          rotateY: 0,
-          x: 0,
-          y: 0,
-          duration: 0.7,
-          ease: 'power2.out',
+        // Stage 1: Reset to Wireframe & Draw dashed outlines (0s -> 2.6s)
+        loopTl
+          .set(filledElements, { opacity: 0 })
+          .set(chips, { opacity: 0, y: 10, scale: 0.9 })
+          .set(wirePaths, { strokeDashoffset: 350, opacity: 1 })
+          .to(wirePaths, {
+            strokeDashoffset: 0,
+            duration: 1.8,
+            stagger: 0.1,
+            ease: 'power2.inOut'
+          })
+          // Stage 2: Morph Wireframe -> Filled Production UI (2.6s -> 5.2s)
+          .to(wirePaths, {
+            opacity: 0.15,
+            duration: 0.5,
+            ease: 'power1.out'
+          }, '+=0.2')
+          .fromTo(
+            filledElements,
+            { opacity: 0, scale: 0.98 },
+            { opacity: 1, scale: 1, duration: 0.7, ease: 'power2.out' },
+            '<0.1'
+          )
+          // Stage 3: Real Service & Project Chips Pop (5.2s -> 7.4s)
+          .to(chips, {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.45,
+            stagger: 0.18,
+            ease: 'back.out(1.7)'
+          }, '+=0.3')
+          // Stage 4: Hold view before looping (7.4s -> 8.0s)
+          .to({}, { duration: 1.2 });
+      } else if (isReduced) {
+        // Show Stage 2 static completed state
+        if (filledUiRef.current) {
+          gsap.set(filledUiRef.current, { opacity: 1, scale: 1 });
         }
-      );
+        if (chipsLayerRef.current) {
+          const chips = chipsLayerRef.current.querySelectorAll('.morph-floating-chip');
+          gsap.set(chips, { opacity: 1, y: 0, scale: 1 });
+        }
+        if (wireframeSvgRef.current) {
+          gsap.set(wireframeSvgRef.current, { opacity: 0 });
+        }
+      }
+    }, heroRef);
+
+    // Visibility & Intersection Observers to pause/resume loop
+    const handleVisibilityChange = () => {
+      if (!loopTlRef.current) return;
+      if (document.hidden) {
+        loopTlRef.current.pause();
+      } else {
+        loopTlRef.current.resume();
+      }
     };
 
-    const heroEl = heroRef.current;
-    if (heroEl) {
-      heroEl.addEventListener('mousemove', handleMouseMove);
-      heroEl.addEventListener('mouseleave', handleMouseLeave);
-    }
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // ------------------------------------------------------------
-    // 21: HERO SCROLL ANIMATION & TRANSITION (ScrollTrigger)
-    // ------------------------------------------------------------
-    const scrollTl = gsap.timeline({
-      scrollTrigger: {
-        trigger: heroEl,
-        start: 'top top',
-        end: 'bottom top',
-        scrub: 0.8,
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!loopTlRef.current) return;
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            loopTlRef.current.resume();
+          } else {
+            loopTlRef.current.pause();
+          }
+        });
       },
-    });
+      { threshold: 0.1 }
+    );
 
-    scrollTl
-      .to(contentRef.current, {
-        y: -60,
-        opacity: 0.45,
-        ease: 'power1.in',
-      }, 0)
-      .to(visualRef.current, {
-        scale: 1.04,
-        y: -35,
-        opacity: 0.9,
-        ease: 'power1.out',
-      }, 0);
+    if (canvasCardRef.current) {
+      observer.observe(canvasCardRef.current);
+    }
 
     return () => {
-      tl.kill();
-      scrollTl.kill();
-      if (heroEl) {
-        heroEl.removeEventListener('mousemove', handleMouseMove);
-        heroEl.removeEventListener('mouseleave', handleMouseLeave);
-      }
+      ctx.revert();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      observer.disconnect();
     };
   }, []);
 
@@ -312,21 +179,20 @@ export default function HeroSection() {
       id="home"
       className="hero-section section-page"
       aria-label="Cortex Freelancing Introduction"
-      style={{ perspective: 1200 }}
     >
       <div className="container">
         <div className="hero-grid">
           {/* ------------------------------------------------------------
-              LEFT COLUMN (~50%): KINETIC EDITORIAL TYPOGRAPHY
+              LEFT COLUMN: KINETIC EDITORIAL TYPOGRAPHY
               ------------------------------------------------------------ */}
           <div ref={contentRef} className="hero-content">
-            {/* 0.2s: Cortex Assembled Eyebrow Mark */}
-            <div ref={badgeRef} className="hero-eyebrow" style={{ opacity: 0 }}>
-              <span ref={badgeDotRef} className="eyebrow-accent-dot" aria-hidden="true" />
+            {/* Eyebrow Mark */}
+            <div ref={badgeRef} className="hero-eyebrow">
+              <span className="eyebrow-accent-dot" aria-hidden="true" />
               <span>{cortexBrand.name.toUpperCase()} STUDIO</span>
             </div>
 
-            {/* 0.6s - 0.8s: Kinetic Headline in Visual Units */}
+            {/* Kinetic Headline */}
             <h1 className="hero-headline">
               <span className="kinetic-line-mask">
                 <span ref={line1Ref} className="kinetic-line-inner">
@@ -345,22 +211,20 @@ export default function HeroSection() {
               </span>
             </h1>
 
-            {/* 1.3s: Supporting Copy */}
-            <p ref={descRef} className="hero-supporting" style={{ opacity: 0 }}>
+            {/* Supporting Copy */}
+            <p ref={descRef} className="hero-supporting">
               Websites, applications, AI/ML systems, automation, software, and digital experiences
               built around your actual requirements.
             </p>
 
-            {/* 1.5s: Coordinated CTAs with Magnetic Effect */}
+            {/* Coordinated CTAs (Standard CSS hover, casing consistent) */}
             <div ref={ctasRef} className="hero-ctas">
               <button
-                ref={ctaBtnRef}
                 type="button"
                 className="btn btn-primary"
                 onClick={() => scrollTo('contact')}
-                data-cursor="explore"
               >
-                Start Your Project
+                Start a project
                 <ArrowRight size={18} className="btn-arrow" aria-hidden="true" />
               </button>
 
@@ -368,242 +232,229 @@ export default function HeroSection() {
                 type="button"
                 className="btn btn-secondary"
                 onClick={() => scrollTo('work')}
-                data-cursor="view"
               >
                 View Our Work
               </button>
             </div>
 
-            {/* 1.8s: Bottom Continuity Micro-Motion Indicator */}
-            <div ref={capRef} className="hero-capability-line" style={{ opacity: 0 }}>
+            {/* Bottom Continuity Indicator */}
+            <div ref={capRef} className="hero-capability-line">
               <Sparkles size={14} style={{ color: 'var(--color-brand-primary)' }} aria-hidden="true" />
               <span>{cortexBrand.capabilityLine}</span>
             </div>
           </div>
 
           {/* ------------------------------------------------------------
-              RIGHT COLUMN (~50%): CORTEX INTELLIGENCE SYSTEM VISUAL
+              RIGHT COLUMN: "IDEA -> SOLUTION" LIGHT CANVAS MORPH CARD
               ------------------------------------------------------------ */}
           <div className="hero-visual-container">
             <div
-              ref={visualRef}
-              className="hero-system-visual"
-              style={{
-                opacity: 0,
-                transformStyle: 'preserve-3d',
-              }}
-              data-cursor="explore"
-              aria-label="Interactive Cortex Architecture System"
+              ref={canvasCardRef}
+              className="morph-canvas-card"
+              role="region"
+              aria-label="Interactive product canvas demonstrating the transformation from wireframe idea to shipped digital solution"
             >
-              {/* Top HUD Telemetry Bar */}
-              <div className="system-hud-bar">
-                <div className="system-hud-left">
-                  <div className="system-hud-dots" aria-hidden="true">
-                    <span className="system-hud-dot hud-dot-red" />
-                    <span className="system-hud-dot hud-dot-yellow" />
-                    <span className="system-hud-dot hud-dot-green" />
-                  </div>
-                  <span className="system-hud-title">SYS: CORTEX-NEURAL-OS // v2.4</span>
+              {/* Card Header: Mini Browser Chrome */}
+              <div className="morph-card-header">
+                <div className="morph-header-dots" aria-hidden="true">
+                  <span className="dot dot-red" />
+                  <span className="dot dot-amber" />
+                  <span className="dot dot-green" />
                 </div>
-                <div className="system-hud-status">
-                  <span className="status-ping" aria-hidden="true" />
-                  <span>ONLINE · LATENCY 14MS</span>
+                <div className="morph-header-title">
+                  <span className="morph-brand-indicator">CTX // PRODUCT CANVAS</span>
+                </div>
+                <div className="morph-header-badge">
+                  <span className="morph-live-dot" aria-hidden="true" />
+                  <span>PRODUCTION ARCHITECTURE</span>
                 </div>
               </div>
 
-              {/* Main Interactive Stage */}
-              <div className="system-canvas-stage">
-                {/* Layer 1: Coordinate Blueprint Grid & Crosshairs */}
-                <div ref={gridLayerRef} className="system-grid-layer" style={{ opacity: 0 }}>
-                  <span className="grid-crosshair cross-tl">[SYS.CTX-01]</span>
-                  <span className="grid-crosshair cross-tr">[RADAR: 24.8°N]</span>
-                  <span className="grid-crosshair cross-bl">[INFERENCE: EDGE]</span>
-                  <span className="grid-crosshair cross-br">[100% PROD]</span>
-                </div>
-
-                {/* Layer 2: SVG Circuit Matrix with Drawing Paths & Traveling Particles */}
+              {/* Main Interactive Morph Stage */}
+              <div className="morph-stage-area">
+                {/* ============================================================
+                    STAGE 1: HAND-DRAWN WIREFRAME SVG (Dashed Outlines)
+                   ============================================================ */}
                 <svg
-                  className="system-svg-matrix"
-                  viewBox="0 0 540 440"
+                  ref={wireframeSvgRef}
+                  className="morph-wireframe-svg"
+                  viewBox="0 0 460 330"
                   fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
                   preserveAspectRatio="xMidYMid meet"
                   aria-hidden="true"
                 >
-                  {/* Concentric Radar Range Rings */}
-                  <circle cx="270" cy="210" r="75" className="radar-ring" />
-                  <circle cx="270" cy="210" r="140" className="radar-ring" />
-                  <circle cx="270" cy="210" r="200" className="radar-ring" />
+                  {/* Top Header Bar Wireframe */}
+                  <rect
+                    x="20"
+                    y="18"
+                    width="420"
+                    height="32"
+                    rx="4"
+                    className="wire-path"
+                    strokeDasharray="350"
+                  />
+                  {/* Nav Dots */}
+                  <line x1="45" y1="34" x2="90" y2="34" className="wire-path" strokeDasharray="350" />
+                  <line x1="330" y1="34" x2="360" y2="34" className="wire-path" strokeDasharray="350" />
+                  <line x1="380" y1="34" x2="420" y2="34" className="wire-path" strokeDasharray="350" />
 
-                  {/* Path 1: Core -> Top-Left AI/ML Node */}
-                  <path
-                    ref={(el) => (svgPathsRef.current[0] = el)}
-                    d="M 270 210 L 210 160 L 140 100 L 90 70"
-                    className="circuit-path"
-                    strokeDasharray="500"
-                    strokeDashoffset="500"
-                    id="path-ai"
+                  {/* Hero Block Wireframe */}
+                  <rect
+                    x="20"
+                    y="62"
+                    width="420"
+                    height="95"
+                    rx="6"
+                    className="wire-path"
+                    strokeDasharray="350"
                   />
-                  {/* Path 2: Core -> Top-Right Web/Apps Node */}
-                  <path
-                    ref={(el) => (svgPathsRef.current[1] = el)}
-                    d="M 270 210 L 330 160 L 400 100 L 450 70"
-                    className="circuit-path"
-                    strokeDasharray="500"
-                    strokeDashoffset="500"
-                    id="path-web"
-                  />
-                  {/* Path 3: Core -> Bottom-Right Automation Node */}
-                  <path
-                    ref={(el) => (svgPathsRef.current[2] = el)}
-                    d="M 270 210 L 330 260 L 400 320 L 450 350"
-                    className="circuit-path"
-                    strokeDasharray="500"
-                    strokeDashoffset="500"
-                    id="path-auto"
-                  />
-                  {/* Path 4: Core -> Bottom-Left Security Node */}
-                  <path
-                    ref={(el) => (svgPathsRef.current[3] = el)}
-                    d="M 270 210 L 210 260 L 140 320 L 90 350"
-                    className="circuit-path"
-                    strokeDasharray="500"
-                    strokeDashoffset="500"
-                    id="path-sec"
+                  <line x1="40" y1="90" x2="220" y2="90" className="wire-path" strokeDasharray="350" strokeWidth="2.5" />
+                  <line x1="40" y1="110" x2="180" y2="110" className="wire-path" strokeDasharray="350" />
+                  <rect
+                    x="40"
+                    y="126"
+                    width="85"
+                    height="20"
+                    rx="10"
+                    className="wire-path"
+                    strokeDasharray="350"
                   />
 
-                  {/* Traveling Data Packet 1 (Along Path AI) */}
-                  <circle r="3.5" className="circuit-particle">
-                    <animateMotion
-                      dur="3.2s"
-                      repeatCount="indefinite"
-                      path="M 270 210 L 210 160 L 140 100 L 90 70"
-                      keyPoints="0;1"
-                      keyTimes="0;1"
-                    />
-                  </circle>
-
-                  {/* Traveling Data Packet 2 (Along Path Web) */}
-                  <circle r="3.5" className="circuit-particle">
-                    <animateMotion
-                      dur="3.8s"
-                      repeatCount="indefinite"
-                      path="M 270 210 L 330 160 L 400 100 L 450 70"
-                      keyPoints="0;1"
-                      keyTimes="0;1"
-                    />
-                  </circle>
-
-                  {/* Traveling Data Packet 3 (Along Path Automation) */}
-                  <circle r="3.5" className="circuit-particle">
-                    <animateMotion
-                      dur="4.2s"
-                      repeatCount="indefinite"
-                      path="M 270 210 L 330 260 L 400 320 L 450 350"
-                      keyPoints="0;1"
-                      keyTimes="0;1"
-                    />
-                  </circle>
-
-                  {/* Traveling Data Packet 4 (Along Path Security) */}
-                  <circle r="3.5" className="circuit-particle">
-                    <animateMotion
-                      dur="3.6s"
-                      repeatCount="indefinite"
-                      path="M 270 210 L 210 260 L 140 320 L 90 350"
-                      keyPoints="0;1"
-                      keyTimes="0;1"
-                    />
-                  </circle>
+                  {/* 3 Grid Cards Wireframe */}
+                  <rect
+                    x="20"
+                    y="170"
+                    width="130"
+                    height="135"
+                    rx="6"
+                    className="wire-path"
+                    strokeDasharray="350"
+                  />
+                  <rect
+                    x="165"
+                    y="170"
+                    width="130"
+                    height="135"
+                    rx="6"
+                    className="wire-path"
+                    strokeDasharray="350"
+                  />
+                  <rect
+                    x="310"
+                    y="170"
+                    width="130"
+                    height="135"
+                    rx="6"
+                    className="wire-path"
+                    strokeDasharray="350"
+                  />
                 </svg>
 
-                {/* Layer 3: Central Core ("Neural Nucleus") */}
-                <div ref={coreRef} className="system-core-container" style={{ opacity: 0 }}>
-                  <div className="core-ambient-aura" aria-hidden="true" />
-                  <div className="core-outer-ring" aria-hidden="true" />
-                  <div className="core-inner-ring" aria-hidden="true" />
-                  <div className="core-nucleus">
-                    <span className="core-emblem">CTX</span>
-                    <span className="core-sublabel">KERNEL</span>
+                {/* ============================================================
+                    STAGE 2: FILLED PRODUCTION UI (Real Tokens + Details)
+                   ============================================================ */}
+                <div ref={filledUiRef} className="morph-filled-ui" aria-hidden="true">
+                  {/* Production Header */}
+                  <div className="filled-header">
+                    <div className="filled-brand">
+                      <span className="brand-dot" />
+                      <span className="brand-name">CORTEX</span>
+                    </div>
+                    <div className="filled-nav">
+                      <span className="nav-item">Work</span>
+                      <span className="nav-item">Services</span>
+                      <span className="nav-btn">Launch</span>
+                    </div>
+                  </div>
+
+                  {/* Production Hero Banner */}
+                  <div className="filled-hero">
+                    <div className="filled-hero-text">
+                      <span className="filled-hero-badge">AI & WEB SYSTEMS</span>
+                      <h4 className="filled-hero-title">Intelligent Digital Products</h4>
+                      <p className="filled-hero-sub">Engineered for real business results.</p>
+                    </div>
+                    <button type="button" className="filled-hero-cta" tabIndex="-1">
+                      Explore
+                    </button>
+                  </div>
+
+                  {/* Production 3-Card Architecture Grid */}
+                  <div className="filled-cards-row">
+                    {/* Card 1: Blue Analytics / Chart Block */}
+                    <div className="filled-card card-blue">
+                      <div className="card-top">
+                        <BarChart2 size={14} className="card-icon" />
+                        <span className="card-title">Analytics</span>
+                      </div>
+                      <div className="mini-chart">
+                        <span className="chart-bar" style={{ height: '40%' }} />
+                        <span className="chart-bar" style={{ height: '75%' }} />
+                        <span className="chart-bar" style={{ height: '60%' }} />
+                        <span className="chart-bar" style={{ height: '90%' }} />
+                      </div>
+                      <span className="card-foot">Live telemetry</span>
+                    </div>
+
+                    {/* Card 2: Peach AI Chat Block */}
+                    <div className="filled-card card-peach">
+                      <div className="card-top">
+                        <MessageSquare size={14} className="card-icon" />
+                        <span className="card-title">Viva AI</span>
+                      </div>
+                      <div className="mini-bubble">
+                        <span className="bubble-text">Pipeline ready.</span>
+                      </div>
+                      <span className="card-foot">Smart assistant</span>
+                    </div>
+
+                    {/* Card 3: Black Code Snippet Block */}
+                    <div className="filled-card card-dark">
+                      <div className="card-top">
+                        <Terminal size={14} className="card-icon" />
+                        <span className="card-title">Build</span>
+                      </div>
+                      <div className="mini-code">
+                        <code>cortex deploy</code>
+                      </div>
+                      <span className="card-foot">Verified ready</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Layer 4: Satellite Interactive System Nodes */}
-                {/* Node 1: AI / ML */}
-                <div
-                  ref={(el) => (nodesRef.current[0] = el)}
-                  className="system-node node-top-left"
-                  style={{ opacity: 0 }}
-                >
-                  <div className="node-icon-box" style={{ color: 'var(--color-brand-primary)' }}>
-                    <Cpu size={16} />
+                {/* ============================================================
+                    STAGE 3: FLOATING SERVICE & PROJECT CHIPS (Real Data Only)
+                   ============================================================ */}
+                <div ref={chipsLayerRef} className="morph-chips-layer" aria-hidden="true">
+                  {/* Real Service Chip 1 */}
+                  <div className="morph-floating-chip chip-service-1">
+                    <span className="chip-pill">Web</span>
+                    <span className="chip-project">KrishiGrahan</span>
                   </div>
-                  <div className="node-text">
-                    <span className="node-title">AI / ML Engine</span>
-                    <span className="node-detail">Neural Pipelines · 99.4%</span>
-                  </div>
-                </div>
 
-                {/* Node 2: Web & Cloud */}
-                <div
-                  ref={(el) => (nodesRef.current[1] = el)}
-                  className="system-node node-top-right"
-                  style={{ opacity: 0 }}
-                >
-                  <div className="node-icon-box" style={{ color: 'var(--color-brand-secondary)' }}>
-                    <Globe size={16} />
+                  {/* Real Service Chip 2 */}
+                  <div className="morph-floating-chip chip-service-2">
+                    <span className="chip-pill chip-pill-ai">AI/ML</span>
+                    <span className="chip-project">Moodify</span>
                   </div>
-                  <div className="node-text">
-                    <span className="node-title">Web & Cloud</span>
-                    <span className="node-detail">React / Vite · Edge SSR</span>
-                  </div>
-                </div>
 
-                {/* Node 3: Automation Hub */}
-                <div
-                  ref={(el) => (nodesRef.current[2] = el)}
-                  className="system-node node-bottom-right"
-                  style={{ opacity: 0 }}
-                >
-                  <div className="node-icon-box" style={{ color: '#ffbd2e' }}>
-                    <Workflow size={16} />
-                  </div>
-                  <div className="node-text">
-                    <span className="node-title">Automation</span>
-                    <span className="node-detail">Autonomous Pipelines</span>
+                  {/* Real Service Chip 3 */}
+                  <div className="morph-floating-chip chip-service-3">
+                    <span className="chip-pill chip-pill-auto">Automation</span>
+                    <span className="chip-project">Mediqueue</span>
                   </div>
                 </div>
+              </div>
 
-                {/* Node 4: Cybersecurity */}
-                <div
-                  ref={(el) => (nodesRef.current[3] = el)}
-                  className="system-node node-bottom-left"
-                  style={{ opacity: 0 }}
-                >
-                  <div className="node-icon-box" style={{ color: '#27c93f' }}>
-                    <ShieldCheck size={16} />
-                  </div>
-                  <div className="node-text">
-                    <span className="node-title">Cybersecurity</span>
-                    <span className="node-detail">Zero-Trust Audited Core</span>
-                  </div>
-                </div>
-
-                {/* Layer 5: Floating Holographic Telemetry HUD Chips */}
-                <div
-                  ref={(el) => (chipsRef.current[0] = el)}
-                  className="system-hud-chip chip-top"
-                  style={{ opacity: 0 }}
-                >
-                  PRODUCTION-GRADE // SCALABLE ARCHITECTURE
-                </div>
-                <div
-                  ref={(el) => (chipsRef.current[1] = el)}
-                  className="system-hud-chip chip-bottom"
-                  style={{ opacity: 0 }}
-                >
-                  LIVE: KRISHIGRAHAN · CORTEX P2P · MOODIFY · VIVA AI
-                </div>
+              {/* Bottom Caption Strip: "Idea → Design → Build → Ship" */}
+              <div className="morph-caption-strip">
+                <span className="caption-step">Idea</span>
+                <span className="caption-arrow">→</span>
+                <span className="caption-step">Design</span>
+                <span className="caption-arrow">→</span>
+                <span className="caption-step">Build</span>
+                <span className="caption-arrow">→</span>
+                <span className="caption-step caption-ship">Ship</span>
               </div>
             </div>
           </div>
