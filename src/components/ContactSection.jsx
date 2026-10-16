@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mail, Phone, MapPin, Github, Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Github, Send, CheckCircle2, AlertCircle, Loader2, ExternalLink } from 'lucide-react';
 import { cortexBrand, projectTypeOptions } from '../data/cortexData';
+import { sendContactInquiry, buildMailtoFallback, RECIPIENT_EMAIL } from '../services/contactEmailService';
 
 export default function ContactSection() {
   const [formData, setFormData] = useState({
@@ -17,6 +18,7 @@ export default function ContactSection() {
     honeypot: '',
   });
 
+  const [submittedDetails, setSubmittedDetails] = useState(null);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -67,14 +69,18 @@ export default function ContactSection() {
     setErrorMessage('');
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 900));
+      await sendContactInquiry(formData);
+      setSubmittedDetails({
+        name: formData.name,
+        email: formData.email,
+        projectType: formData.projectType,
+      });
       setStatus('success');
     } catch (err) {
       setStatus('error');
       setErrorMessage(
-        'Something went wrong while submitting your request. Please try again or contact us directly at ' +
-          cortexBrand.primaryEmail +
-          '.'
+        err.message ||
+          `Unable to send inquiry automatically. You can email us directly at ${RECIPIENT_EMAIL}.`
       );
     }
   };
@@ -93,6 +99,7 @@ export default function ContactSection() {
       additionalRequirements: '',
       honeypot: '',
     });
+    setSubmittedDetails(null);
     setErrors({});
     setStatus('idle');
   };
@@ -278,13 +285,16 @@ export default function ContactSection() {
           <div className="form-card">
             {status === 'success' ? (
               <div className="form-status-alert form-status-success" role="status" aria-live="polite">
-                <CheckCircle2 size={24} style={{ flexShrink: 0, marginTop: '2px' }} aria-hidden="true" />
-                <div>
+                <CheckCircle2 size={26} style={{ flexShrink: 0, marginTop: '2px', color: '#10b981' }} aria-hidden="true" />
+                <div style={{ flex: 1 }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>
-                    Thanks! We've received your project details.
+                    Inquiry Mailed Directly to Our Inbox!
                   </h3>
-                  <p style={{ fontSize: '14px', marginBottom: '16px' }}>
-                    The Cortex team will review your requirements and get back to you shortly.
+                  <p style={{ fontSize: '14px', marginBottom: '8px', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
+                    Thank you {submittedDetails?.name || 'for reaching out'}! Your project enquiry for <strong>{submittedDetails?.projectType || 'your project'}</strong> has been sent directly to <strong>{RECIPIENT_EMAIL}</strong>.
+                  </p>
+                  <p style={{ fontSize: '13px', marginBottom: '16px', color: 'var(--color-text-secondary)' }}>
+                    Our team will review your requirements and reply directly to <strong>{submittedDetails?.email}</strong>.
                   </p>
                   <button type="button" className="btn btn-secondary" onClick={handleReset}>
                     Send Another Inquiry
@@ -294,11 +304,28 @@ export default function ContactSection() {
             ) : (
               <form onSubmit={handleSubmit} noValidate aria-label="Project Inquiry Form">
                 {status === 'error' && (
-                  <div className="form-status-alert form-status-error" role="alert">
-                    <AlertCircle size={20} style={{ flexShrink: 0 }} aria-hidden="true" />
-                    <div>
-                      <strong>Something went wrong.</strong>
-                      <p>{errorMessage}</p>
+                  <div
+                    className="form-status-alert form-status-error"
+                    role="alert"
+                    style={{ marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}
+                  >
+                    <AlertCircle size={22} style={{ flexShrink: 0, marginTop: '2px', color: '#ef4444' }} aria-hidden="true" />
+                    <div style={{ flex: 1 }}>
+                      <strong style={{ display: 'block', marginBottom: '4px', fontSize: '15px' }}>
+                        Submission Notice
+                      </strong>
+                      <p style={{ fontSize: '13px', marginBottom: '10px', color: 'var(--color-text-secondary)' }}>
+                        {errorMessage}
+                      </p>
+                      <a
+                        href={buildMailtoFallback(formData, RECIPIENT_EMAIL)}
+                        className="btn btn-secondary"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', fontSize: '12px' }}
+                      >
+                        <Mail size={14} />
+                        <span>Send directly via your Email App</span>
+                        <ExternalLink size={12} />
+                      </a>
                     </div>
                   </div>
                 )}
@@ -541,15 +568,29 @@ export default function ContactSection() {
                           style={{ animation: 'spin 1s linear infinite' }}
                           aria-hidden="true"
                         />
-                        <span>Submitting Details...</span>
+                        <span>Sending to Inbox...</span>
                       </>
                     ) : (
                       <>
-                        <span>Start a Conversation</span>
+                        <span>Send Project Inquiry</span>
                         <Send size={16} className="btn-arrow" aria-hidden="true" />
                       </>
                     )}
                   </button>
+
+                  <p
+                    style={{
+                      fontSize: '12px',
+                      color: 'var(--color-text-secondary)',
+                      marginTop: '12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <Mail size={13} style={{ color: 'var(--color-brand-primary)', flexShrink: 0 }} aria-hidden="true" />
+                    <span>Inquiries are dispatched directly to <strong>{RECIPIENT_EMAIL}</strong></span>
+                  </p>
                 </div>
               </form>
             )}
