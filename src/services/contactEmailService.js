@@ -2,15 +2,19 @@ import { cortexBrand } from '../data/cortexData';
 
 /**
  * Service to handle sending client project enquiries directly to the team email account.
- * Supports:
- *  1. FormSubmit AJAX API (Zero backend, zero registration required. Directly emails cortexBrand.primaryEmail)
- *  2. Web3Forms (Optional: activated if VITE_WEB3FORMS_ACCESS_KEY is defined in .env)
+ * Primary Provider: FormSubmit AJAX endpoint (https://formsubmit.co/ajax/<recipient>)
+ * Optional Provider: Web3Forms (activated if VITE_WEB3FORMS_ACCESS_KEY is defined)
  */
 
 export const RECIPIENT_EMAIL =
   import.meta.env.VITE_CONTACT_EMAIL || cortexBrand.primaryEmail || 'hackathoncortex@gmail.com';
 
+export const SITE_URL =
+  import.meta.env.VITE_SITE_URL || cortexBrand.deploymentUrl || 'https://cortex-blush-three.vercel.app';
+
 const WEB3FORMS_KEY = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || '';
+
+export const ACTIVE_PROVIDER = WEB3FORMS_KEY ? 'Web3Forms' : 'FormSubmit';
 
 /**
  * Format enquiry payload into a structured summary for email clients
@@ -40,14 +44,112 @@ Additional Technical / Integration Notes:
 ${data.additionalRequirements || 'None specified'}
 
 -----------------------------------------
-Submitted at: ${new Date().toISOString()} via Cortex Freelancing Portal
+Submitted at: ${new Date().toISOString()} via Cortex Freelancing Portal (${SITE_URL})
 `.trim();
+}
+
+/**
+ * Sends inquiry using FormSubmit AJAX endpoint.
+ * Note: FormSubmit requires one-time activation if the recipient email hasn't been verified yet.
+ */
+async function sendViaFormSubmit(data, targetEmail) {
+  const endpoint = `https://formsubmit.co/ajax/${encodeURIComponent(targetEmail)}`;
+
+  if (import.meta.env.DEV) {
+    console.log('[contactEmailService] Request start:', {
+      provider: 'FormSubmit',
+      recipient: targetEmail,
+      projectType: data.projectType,
+    });
+  }
+
+  const payload = {
+    _subject: `[Cortex Inquiry] ${data.name} — ${data.projectType}`,
+    _replyto: data.email,
+    _template: 'table',
+    _captcha: 'false',
+    _honey: data.honeypot || '',
+    'Client Name': data.name,
+    'Client Email': data.email,
+    'Phone / WhatsApp': data.phone || 'Not provided',
+    'Company / Organization': data.company || 'Not provided',
+    'Project Type': data.projectType,
+    'Project Scope & Description': data.description,
+    'Current Website / App': data.currentUrl || 'None',
+    'Target Timeline': data.timeline || 'Flexible',
+    'Budget Discussion': data.budget || 'Requirements based',
+    'Additional Requirements': data.additionalRequirements || 'None',
+    'Deployment URL': SITE_URL,
+    'Submitted On': new Date().toLocaleString(),
+  };
+
+  let response;
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (networkErr) {
+    if (import.meta.env.DEV) {
+      console.error('[contactEmailService] Network failure during FormSubmit request:', networkErr);
+    }
+    throw new Error('Network error: Unable to connect to the email delivery server. Please check your internet connection or use direct email.');
+  }
+
+  let result;
+  try {
+    result = await response.json();
+  } catch (jsonErr) {
+    if (import.meta.env.DEV) {
+      console.error('[contactEmailService] Failed to parse FormSubmit JSON response, HTTP status:', response.status);
+    }
+    throw new Error(`Email server returned an invalid response (HTTP ${response.status}). Please try again later.`);
+  }
+
+  if (import.meta.env.DEV) {
+    console.log('[contactEmailService] Request completion:', {
+      provider: 'FormSubmit',
+      httpStatus: response.status,
+      successField: result?.success,
+    });
+  }
+
+  const isSuccess = response.ok && (result.success === 'true' || result.success === true);
+
+  if (!isSuccess) {
+    const rawMessage = typeof result.message === 'string' ? result.message : '';
+    if (rawMessage.toLowerCase().includes('activation')) {
+      throw new Error(
+        `Email delivery requires one-time activation. FormSubmit sent an activation link to ${targetEmail}. Please check that inbox and click "Activate Form" to enable inquiry forwarding.`
+      );
+    }
+    throw new Error(rawMessage || `FormSubmit rejected the inquiry (HTTP ${response.status}).`);
+  }
+
+  return {
+    success: true,
+    provider: 'FormSubmit',
+    message: result.message || 'Your inquiry has been sent directly to our email account.',
+  };
 }
 
 /**
  * Sends inquiry using Web3Forms endpoint
  */
 async function sendViaWeb3Forms(data, apiKey) {
+  const endpoint = 'https://api.web3forms.com/submit';
+
+  if (import.meta.env.DEV) {
+    console.log('[contactEmailService] Request start:', {
+      provider: 'Web3Forms',
+      projectType: data.projectType,
+    });
+  }
+
   const payload = {
     access_key: apiKey,
     subject: `[Cortex Inquiry] ${data.name} — ${data.projectType}`,
@@ -65,70 +167,49 @@ async function sendViaWeb3Forms(data, apiKey) {
     message: formatMessageBody(data),
   };
 
-  const response = await fetch('https://api.web3forms.com/submit', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
+  let response;
+  try {
+    response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (networkErr) {
+    if (import.meta.env.DEV) {
+      console.error('[contactEmailService] Network failure during Web3Forms request:', networkErr);
+    }
+    throw new Error('Network error: Unable to connect to Web3Forms server. Please check your internet connection or use direct email.');
+  }
 
-  const result = await response.json().catch(() => ({}));
+  let result;
+  try {
+    result = await response.json();
+  } catch (jsonErr) {
+    if (import.meta.env.DEV) {
+      console.error('[contactEmailService] Failed to parse Web3Forms JSON response, HTTP status:', response.status);
+    }
+    throw new Error(`Email service returned an invalid response (HTTP ${response.status}). Please try again later.`);
+  }
 
-  if (!response.ok || result.success === false) {
-    throw new Error(result.message || 'Failed to deliver inquiry via Web3Forms.');
+  if (import.meta.env.DEV) {
+    console.log('[contactEmailService] Request completion:', {
+      provider: 'Web3Forms',
+      httpStatus: response.status,
+      successField: result?.success,
+    });
+  }
+
+  if (!response.ok || result.success !== true) {
+    throw new Error(result.message || `Web3Forms rejected the submission (HTTP ${response.status}).`);
   }
 
   return {
+    success: true,
     provider: 'Web3Forms',
     message: result.message || 'Your inquiry has been successfully sent!',
-  };
-}
-
-/**
- * Sends inquiry using FormSubmit AJAX endpoint (Direct to recipient email)
- */
-async function sendViaFormSubmit(data, targetEmail) {
-  const payload = {
-    _subject: `[Cortex Inquiry] ${data.name} — ${data.projectType}`,
-    _replyto: data.email,
-    _template: 'table',
-    _captcha: 'false',
-    _honey: data.honeypot || '',
-    'Client Name': data.name,
-    'Client Email': data.email,
-    'Phone / WhatsApp': data.phone || 'Not provided',
-    'Company / Organization': data.company || 'Not provided',
-    'Project Type': data.projectType,
-    'Project Scope & Description': data.description,
-    'Current Website / App': data.currentUrl || 'None',
-    'Target Timeline': data.timeline || 'Flexible',
-    'Budget Discussion': data.budget || 'Requirements based',
-    'Additional Requirements': data.additionalRequirements || 'None',
-    'Submitted On': new Date().toLocaleString(),
-  };
-
-  const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(targetEmail)}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const result = await response.json().catch(() => ({}));
-
-  if (!response.ok || (result.success !== 'true' && result.success !== true && !result.message)) {
-    throw new Error(
-      result.message || 'Unable to deliver inquiry to the email server. Please try again or use direct email.'
-    );
-  }
-
-  return {
-    provider: 'FormSubmit',
-    message: result.message || 'Your inquiry has been sent directly to our email account.',
   };
 }
 
@@ -138,7 +219,10 @@ async function sendViaFormSubmit(data, targetEmail) {
 export async function sendContactInquiry(formData) {
   // Silent bot trap
   if (formData.honeypot) {
-    return { success: true, message: 'Inquiry received.' };
+    if (import.meta.env.DEV) {
+      console.warn('[contactEmailService] Honeypot triggered, simulating successful capture without dispatching.');
+    }
+    return { success: true, provider: 'Honeypot', message: 'Inquiry received.' };
   }
 
   if (WEB3FORMS_KEY) {
@@ -152,7 +236,9 @@ export async function sendContactInquiry(formData) {
  * Direct mailto fallback link generator in case of client network disconnect
  */
 export function buildMailtoFallback(formData, recipient = RECIPIENT_EMAIL) {
-  const subject = encodeURIComponent(`Project Inquiry: ${formData.projectType || 'New Project'} - ${formData.name || 'Client'}`);
+  const subject = encodeURIComponent(
+    `Project Inquiry: ${formData.projectType || 'New Project'} - ${formData.name || 'Client'}`
+  );
   const body = encodeURIComponent(formatMessageBody(formData));
   return `mailto:${recipient}?subject=${subject}&body=${body}`;
 }

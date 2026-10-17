@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://cortexfreelancing.com/sitemap.xml
+Sitemap: https://cortex-blush-three.vercel.app/sitemap.xml

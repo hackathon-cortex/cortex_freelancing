@@ -17,6 +17,7 @@ import {
   sendContactInquiry,
   buildMailtoFallback,
   RECIPIENT_EMAIL,
+  ACTIVE_PROVIDER,
 } from '../services/contactEmailService';
 
 export default function ContactSection() {
@@ -40,6 +41,7 @@ export default function ContactSection() {
   const [status, setStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const submitBtnRef = useRef(null);
+  const isSubmittingRef = useRef(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -98,65 +100,88 @@ export default function ContactSection() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log('[Contact] Submit handler triggered');
+    if (import.meta.env.DEV) {
+      console.log('[Contact] Submit handler triggered');
+    }
 
     if (formData.honeypot) {
-      console.warn('[Contact] Honeypot triggered');
+      if (import.meta.env.DEV) {
+        console.warn('[Contact] Honeypot triggered');
+      }
       return;
     }
 
-    if (status === 'loading') {
+    // Guard against duplicate / concurrent submission triggers
+    if (isSubmittingRef.current || status === 'loading') {
+      if (import.meta.env.DEV) {
+        console.warn('[Contact] Submission already in flight, ignoring duplicate trigger.');
+      }
       return;
     }
 
     const validationErrors = validate();
 
     if (Object.keys(validationErrors).length > 0) {
-      console.warn('[Contact] Validation failed', validationErrors);
+      if (import.meta.env.DEV) {
+        console.warn('[Contact] Validation failed for fields:', Object.keys(validationErrors));
+      }
       setErrors(validationErrors);
 
       const firstKey = Object.keys(validationErrors)[0];
-      document.getElementById(firstKey)?.focus();
+      const errorElement = document.getElementById(firstKey);
+      if (errorElement) {
+        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        errorElement.focus();
+      }
 
       return;
     }
 
+    isSubmittingRef.current = true;
     setStatus('loading');
     setErrorMessage('');
     setErrors({});
 
     try {
-      console.log('[Contact] Sending inquiry', {
-        provider: import.meta.env.VITE_WEB3FORMS_ACCESS_KEY
-          ? 'Web3Forms'
-          : 'FormSubmit',
-        recipient: RECIPIENT_EMAIL,
-      });
+      if (import.meta.env.DEV) {
+        console.log('[Contact] Initiating dispatch', {
+          provider: ACTIVE_PROVIDER,
+          recipient: RECIPIENT_EMAIL,
+        });
+      }
 
       const result = await sendContactInquiry({
         ...formData,
         name: formData.name.trim(),
         email: formData.email.trim(),
         description: formData.description.trim(),
+        currentUrl: formData.currentUrl.trim(),
       });
 
-      if (!result || result.success === false) {
+      if (!result || result.success !== true) {
         throw new Error(
           result?.message || 'The email provider did not confirm submission.'
         );
       }
 
-      console.log('[Contact] Provider response', result);
+      if (import.meta.env.DEV) {
+        console.log('[Contact] Provider response confirmed success:', {
+          provider: result.provider,
+          message: result.message,
+        });
+      }
 
       setSubmittedDetails({
-        name: formData.name,
-        email: formData.email,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
         projectType: formData.projectType,
       });
 
       setStatus('success');
     } catch (err) {
-      console.error('[Contact] Submission failed', err);
+      if (import.meta.env.DEV) {
+        console.error('[Contact] Submission failed:', err);
+      }
 
       setStatus('error');
 
@@ -165,6 +190,8 @@ export default function ContactSection() {
           ? err.message
           : 'Unable to send your inquiry. Please try again.'
       );
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
@@ -417,7 +444,7 @@ export default function ContactSection() {
                       marginBottom: '6px',
                     }}
                   >
-                    Inquiry Submitted
+                    Inquiry Submitted Successfully
                   </h3>
 
                   <p
@@ -428,9 +455,8 @@ export default function ContactSection() {
                       lineHeight: 1.5,
                     }}
                   >
-                    Thank you {submittedDetails?.name}. The email provider
-                    accepted your inquiry for{' '}
-                    <strong>{submittedDetails?.projectType}</strong>.
+                    Thank you, {submittedDetails?.name}! Your project inquiry for{' '}
+                    <strong>{submittedDetails?.projectType}</strong> has been confirmed.
                   </p>
 
                   <p
@@ -440,9 +466,8 @@ export default function ContactSection() {
                       color: 'var(--color-text-secondary)',
                     }}
                   >
-                    The inquiry was submitted to{' '}
-                    <strong>{RECIPIENT_EMAIL}</strong>. Email delivery may
-                    depend on provider activation and configuration.
+                    The inquiry details were delivered to{' '}
+                    <strong>{RECIPIENT_EMAIL}</strong>. Our engineering team will review your specifications and reply to <strong>{submittedDetails?.email}</strong>.
                   </p>
 
                   <button

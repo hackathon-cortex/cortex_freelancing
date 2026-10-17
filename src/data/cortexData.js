@@ -7,6 +7,7 @@ export const cortexBrand = {
   primaryEmail: "hackathoncortex@gmail.com",
   phoneNumbers: ["9428622853", "9313198689"],
   github: "https://github.com/hackathon-cortex",
+  deploymentUrl: "https://cortex-blush-three.vercel.app",
   location: "Ahmedabad, Gujarat, India",
   corePromise: "Business-focused solutions that are scalable, secure, reliable, user-friendly, and built around the client's actual requirements."
 };
