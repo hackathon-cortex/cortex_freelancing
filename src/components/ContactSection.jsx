@@ -1,10 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Mail, Phone, MapPin, Github, Send, CheckCircle2, AlertCircle, Loader2, ExternalLink } from 'lucide-react';
+
+import React, { useState, useRef } from 'react';
+import {
+  Mail,
+  Phone,
+  MapPin,
+  Github,
+  Send,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  ExternalLink,
+} from 'lucide-react';
+
 import { cortexBrand, projectTypeOptions } from '../data/cortexData';
-import { sendContactInquiry, buildMailtoFallback, RECIPIENT_EMAIL } from '../services/contactEmailService';
+import {
+  sendContactInquiry,
+  buildMailtoFallback,
+  RECIPIENT_EMAIL,
+} from '../services/contactEmailService';
 
 export default function ContactSection() {
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     name: '',
     email: '',
     phone: '',
@@ -16,8 +32,9 @@ export default function ContactSection() {
     budget: 'Pricing discussed based on requirements',
     additionalRequirements: '',
     honeypot: '',
-  });
+  };
 
+  const [formData, setFormData] = useState(initialFormData);
   const [submittedDetails, setSubmittedDetails] = useState(null);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('idle');
@@ -26,116 +43,202 @@ export default function ContactSection() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
     if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
+      setErrors((prev) => ({
+        ...prev,
+        [name]: '',
+      }));
     }
   };
 
   const validate = () => {
     const errs = {};
+
     if (!formData.name.trim()) {
       errs.name = 'Please provide your name.';
     }
+
     if (!formData.email.trim()) {
       errs.email = 'Please provide your email address.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+    } else if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())
+    ) {
       errs.email = 'Please enter a valid email address.';
     }
+
     if (!formData.projectType) {
       errs.projectType = 'Please select a project type.';
     }
+
     if (!formData.description.trim()) {
       errs.description = 'Please describe what you want to build.';
     }
+
+    if (formData.currentUrl.trim()) {
+      try {
+        const url = new URL(formData.currentUrl.trim());
+
+        if (!['http:', 'https:'].includes(url.protocol)) {
+          errs.currentUrl = 'Please enter a valid HTTP or HTTPS URL.';
+        }
+      } catch {
+        errs.currentUrl = 'Please enter a valid URL, including https://.';
+      }
+    }
+
     return errs;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.honeypot) return;
+    console.log('[Contact] Submit handler triggered');
+
+    if (formData.honeypot) {
+      console.warn('[Contact] Honeypot triggered');
+      return;
+    }
+
+    if (status === 'loading') {
+      return;
+    }
 
     const validationErrors = validate();
+
     if (Object.keys(validationErrors).length > 0) {
+      console.warn('[Contact] Validation failed', validationErrors);
       setErrors(validationErrors);
+
       const firstKey = Object.keys(validationErrors)[0];
-      const element = document.getElementById(firstKey);
-      if (element) element.focus();
+      document.getElementById(firstKey)?.focus();
+
       return;
     }
 
     setStatus('loading');
     setErrorMessage('');
+    setErrors({});
 
     try {
-      await sendContactInquiry(formData);
+      console.log('[Contact] Sending inquiry', {
+        provider: import.meta.env.VITE_WEB3FORMS_ACCESS_KEY
+          ? 'Web3Forms'
+          : 'FormSubmit',
+        recipient: RECIPIENT_EMAIL,
+      });
+
+      const result = await sendContactInquiry({
+        ...formData,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        description: formData.description.trim(),
+      });
+
+      if (!result || result.success === false) {
+        throw new Error(
+          result?.message || 'The email provider did not confirm submission.'
+        );
+      }
+
+      console.log('[Contact] Provider response', result);
+
       setSubmittedDetails({
         name: formData.name,
         email: formData.email,
         projectType: formData.projectType,
       });
+
       setStatus('success');
     } catch (err) {
+      console.error('[Contact] Submission failed', err);
+
       setStatus('error');
+
       setErrorMessage(
-        err.message ||
-          `Unable to send inquiry automatically. You can email us directly at ${RECIPIENT_EMAIL}.`
+        err instanceof Error
+          ? err.message
+          : 'Unable to send your inquiry. Please try again.'
       );
     }
   };
 
   const handleReset = () => {
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      company: '',
-      projectType: 'Business Website',
-      description: '',
-      currentUrl: '',
-      timeline: '',
-      budget: 'Pricing discussed based on requirements',
-      additionalRequirements: '',
-      honeypot: '',
-    });
+    setFormData(initialFormData);
     setSubmittedDetails(null);
     setErrors({});
+    setErrorMessage('');
     setStatus('idle');
   };
 
+  const fieldError = (name) =>
+    errors[name] ? (
+      <span
+        id={`${name}-error`}
+        className="form-error-text"
+        role="alert"
+      >
+        <AlertCircle size={12} aria-hidden="true" />
+        {errors[name]}
+      </span>
+    ) : null;
+
   return (
-    <section id="contact" className="section section-page" aria-labelledby="contact-heading">
+    <section
+      id="contact"
+      className="section section-page"
+      aria-labelledby="contact-heading"
+    >
       <div className="container">
-        {/* Section Header with Line Masks */}
         <div className="section-header">
           <div className="section-eyebrow">
             <span className="eyebrow-accent" aria-hidden="true" />
             <span>11 — START A PROJECT</span>
           </div>
+
           <h2 id="contact-heading" className="section-title">
             <span className="reveal-line-mask">
               <span className="reveal-line-inner">Have an Idea?</span>
             </span>
+
             <span className="reveal-line-mask">
-              <span className="reveal-line-inner" style={{ color: 'var(--color-brand-primary)' }}>
+              <span
+                className="reveal-line-inner"
+                style={{ color: 'var(--color-brand-primary)' }}
+              >
                 We Can Build It.
               </span>
             </span>
           </h2>
+
           <p className="section-intro">
-            Tell us what you're trying to build. We'll review your requirements and discuss the best
-            way to turn the idea into a working solution.
+            Tell us what you're trying to build. We'll review your
+            requirements and discuss the best way to turn the idea into a
+            working solution.
           </p>
         </div>
 
         <div className="contact-layout">
-          {/* Direct Contact Details Panel */}
-          <aside className="contact-info-panel" aria-label="Direct Contact Information">
+          <aside
+            className="contact-info-panel"
+            aria-label="Direct Contact Information"
+          >
             <div className="direct-contact-card">
-              <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>
+              <h3
+                style={{
+                  fontSize: '18px',
+                  fontWeight: 700,
+                  marginBottom: '8px',
+                }}
+              >
                 Direct Contact
               </h3>
+
               <p
                 style={{
                   fontSize: '14px',
@@ -144,62 +247,69 @@ export default function ContactSection() {
                   marginBottom: '12px',
                 }}
               >
-                Have questions before filling out the form? Reach out directly to the Cortex team.
+                Have questions before filling out the form? Reach out
+                directly to the Cortex team.
               </p>
 
-              {/* Primary Email */}
               <div className="contact-detail-row">
                 <Mail
                   size={18}
-                  style={{ color: 'var(--color-brand-primary)', marginTop: '2px' }}
+                  style={{
+                    color: 'var(--color-brand-primary)',
+                    marginTop: '2px',
+                  }}
                   aria-hidden="true"
                 />
+
                 <div>
-                  <div
-                    style={{
-                      fontSize: '11px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      color: 'var(--color-text-secondary)',
-                      fontWeight: 600,
-                    }}
-                  >
+                  <div className="contact-detail-label">
                     Primary Email
                   </div>
+
                   <a
-                    href={`mailto:${cortexBrand.primaryEmail}`}
-                    style={{ fontSize: '15px', fontWeight: 600, color: 'var(--color-text-primary)' }}
+                    href={`mailto:${RECIPIENT_EMAIL}`}
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: 'var(--color-text-primary)',
+                    }}
                   >
-                    {cortexBrand.primaryEmail}
+                    {RECIPIENT_EMAIL}
                   </a>
                 </div>
               </div>
 
-              {/* Phones */}
               <div className="contact-detail-row">
                 <Phone
                   size={18}
-                  style={{ color: 'var(--color-brand-primary)', marginTop: '2px' }}
+                  style={{
+                    color: 'var(--color-brand-primary)',
+                    marginTop: '2px',
+                  }}
                   aria-hidden="true"
                 />
+
                 <div>
-                  <div
-                    style={{
-                      fontSize: '11px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      color: 'var(--color-text-secondary)',
-                      fontWeight: 600,
-                    }}
-                  >
+                  <div className="contact-detail-label">
                     Phone / WhatsApp
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px',
+                    }}
+                  >
                     {cortexBrand.phoneNumbers.map((phone) => (
                       <a
                         key={phone}
                         href={`tel:${phone}`}
-                        style={{ fontSize: '14px', fontWeight: 500, color: 'var(--color-text-primary)' }}
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          color: 'var(--color-text-primary)',
+                        }}
                       >
                         +91 {phone}
                       </a>
@@ -208,55 +318,56 @@ export default function ContactSection() {
                 </div>
               </div>
 
-              {/* Location */}
               <div className="contact-detail-row">
                 <MapPin
                   size={18}
-                  style={{ color: 'var(--color-brand-primary)', marginTop: '2px' }}
+                  style={{
+                    color: 'var(--color-brand-primary)',
+                    marginTop: '2px',
+                  }}
                   aria-hidden="true"
                 />
+
                 <div>
-                  <div
-                    style={{
-                      fontSize: '11px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      color: 'var(--color-text-secondary)',
-                      fontWeight: 600,
-                    }}
-                  >
+                  <div className="contact-detail-label">
                     Location
                   </div>
-                  <div style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>
+
+                  <div
+                    style={{
+                      fontSize: '14px',
+                      color: 'var(--color-text-primary)',
+                    }}
+                  >
                     {cortexBrand.location}
                   </div>
                 </div>
               </div>
 
-              {/* GitHub */}
               <div className="contact-detail-row">
                 <Github
                   size={18}
-                  style={{ color: 'var(--color-brand-primary)', marginTop: '2px' }}
+                  style={{
+                    color: 'var(--color-brand-primary)',
+                    marginTop: '2px',
+                  }}
                   aria-hidden="true"
                 />
+
                 <div>
-                  <div
-                    style={{
-                      fontSize: '11px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      color: 'var(--color-text-secondary)',
-                      fontWeight: 600,
-                    }}
-                  >
+                  <div className="contact-detail-label">
                     GitHub Organization
                   </div>
+
                   <a
                     href={cortexBrand.github}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: 500 }}
+                    style={{
+                      fontSize: '14px',
+                      color: 'var(--color-text-primary)',
+                      fontWeight: 500,
+                    }}
                   >
                     github.com/hackathon-cortex
                   </a>
@@ -264,7 +375,6 @@ export default function ContactSection() {
               </div>
             </div>
 
-            {/* Note on Private Custom Pricing */}
             <div
               style={{
                 padding: '16px 20px',
@@ -276,78 +386,163 @@ export default function ContactSection() {
                 lineHeight: 1.5,
               }}
             >
-              <strong>Pricing Approach:</strong> We scope every project individually based on your
-              requirements, technical complexity, integrations, and milestones.
+              <strong>Pricing Approach:</strong> We scope every project
+              individually based on your requirements, technical complexity,
+              integrations, and milestones.
             </div>
           </aside>
 
-          {/* Project Inquiry Form */}
           <div className="form-card">
             {status === 'success' ? (
-              <div className="form-status-alert form-status-success" role="status" aria-live="polite">
-                <CheckCircle2 size={26} style={{ flexShrink: 0, marginTop: '2px', color: '#10b981' }} aria-hidden="true" />
+              <div
+                className="form-status-alert form-status-success"
+                role="status"
+                aria-live="polite"
+              >
+                <CheckCircle2
+                  size={26}
+                  style={{
+                    flexShrink: 0,
+                    marginTop: '2px',
+                    color: '#10b981',
+                  }}
+                  aria-hidden="true"
+                />
+
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '6px' }}>
-                    Inquiry Mailed Directly to Our Inbox!
+                  <h3
+                    style={{
+                      fontSize: '18px',
+                      fontWeight: 700,
+                      marginBottom: '6px',
+                    }}
+                  >
+                    Inquiry Submitted
                   </h3>
-                  <p style={{ fontSize: '14px', marginBottom: '8px', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
-                    Thank you {submittedDetails?.name || 'for reaching out'}! Your project enquiry for <strong>{submittedDetails?.projectType || 'your project'}</strong> has been sent directly to <strong>{RECIPIENT_EMAIL}</strong>.
+
+                  <p
+                    style={{
+                      fontSize: '14px',
+                      marginBottom: '8px',
+                      color: 'var(--color-text-secondary)',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Thank you {submittedDetails?.name}. The email provider
+                    accepted your inquiry for{' '}
+                    <strong>{submittedDetails?.projectType}</strong>.
                   </p>
-                  <p style={{ fontSize: '13px', marginBottom: '16px', color: 'var(--color-text-secondary)' }}>
-                    Our team will review your requirements and reply directly to <strong>{submittedDetails?.email}</strong>.
+
+                  <p
+                    style={{
+                      fontSize: '13px',
+                      marginBottom: '16px',
+                      color: 'var(--color-text-secondary)',
+                    }}
+                  >
+                    The inquiry was submitted to{' '}
+                    <strong>{RECIPIENT_EMAIL}</strong>. Email delivery may
+                    depend on provider activation and configuration.
                   </p>
-                  <button type="button" className="btn btn-secondary" onClick={handleReset}>
+
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleReset}
+                  >
                     Send Another Inquiry
                   </button>
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} noValidate aria-label="Project Inquiry Form">
+              <form
+                onSubmit={handleSubmit}
+                noValidate
+                aria-label="Project Inquiry Form"
+              >
                 {status === 'error' && (
                   <div
                     className="form-status-alert form-status-error"
                     role="alert"
-                    style={{ marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}
+                    style={{
+                      marginBottom: '20px',
+                      display: 'flex',
+                      gap: '12px',
+                      alignItems: 'flex-start',
+                    }}
                   >
-                    <AlertCircle size={22} style={{ flexShrink: 0, marginTop: '2px', color: '#ef4444' }} aria-hidden="true" />
+                    <AlertCircle
+                      size={22}
+                      style={{
+                        flexShrink: 0,
+                        marginTop: '2px',
+                        color: '#ef4444',
+                      }}
+                      aria-hidden="true"
+                    />
+
                     <div style={{ flex: 1 }}>
-                      <strong style={{ display: 'block', marginBottom: '4px', fontSize: '15px' }}>
-                        Submission Notice
+                      <strong
+                        style={{
+                          display: 'block',
+                          marginBottom: '4px',
+                          fontSize: '15px',
+                        }}
+                      >
+                        Submission Failed
                       </strong>
-                      <p style={{ fontSize: '13px', marginBottom: '10px', color: 'var(--color-text-secondary)' }}>
+
+                      <p
+                        style={{
+                          fontSize: '13px',
+                          marginBottom: '10px',
+                          color: 'var(--color-text-secondary)',
+                        }}
+                      >
                         {errorMessage}
                       </p>
+
                       <a
-                        href={buildMailtoFallback(formData, RECIPIENT_EMAIL)}
+                        href={buildMailtoFallback(
+                          formData,
+                          RECIPIENT_EMAIL
+                        )}
                         className="btn btn-secondary"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 14px', fontSize: '12px' }}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '8px 14px',
+                          fontSize: '12px',
+                        }}
                       >
-                        <Mail size={14} />
-                        <span>Send directly via your Email App</span>
-                        <ExternalLink size={12} />
+                        <Mail size={14} aria-hidden="true" />
+                        <span>Send via Email App</span>
+                        <ExternalLink size={12} aria-hidden="true" />
                       </a>
                     </div>
                   </div>
                 )}
 
-                {/* Honeypot field */}
                 <input
                   type="text"
                   name="honeypot"
                   value={formData.honeypot}
                   onChange={handleChange}
-                  tabIndex="-1"
+                  tabIndex={-1}
                   autoComplete="off"
                   className="honeypot-field"
                   aria-hidden="true"
                 />
 
-                {/* Name & Email */}
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label htmlFor="name" className="form-label">
-                      <span>Name <span className="form-req">*</span></span>
+                      <span>
+                        Name <span className="form-req">*</span>
+                      </span>
                     </label>
+
                     <input
                       type="text"
                       id="name"
@@ -358,21 +553,23 @@ export default function ContactSection() {
                       className={`input ${errors.name ? 'input-error' : ''}`}
                       aria-required="true"
                       aria-invalid={!!errors.name}
-                      aria-describedby={errors.name ? 'name-error' : undefined}
+                      aria-describedby={
+                        errors.name ? 'name-error' : undefined
+                      }
+                      autoComplete="name"
                       disabled={status === 'loading'}
                     />
-                    {errors.name && (
-                      <span id="name-error" className="form-error-text" role="alert">
-                        <AlertCircle size={12} aria-hidden="true" />
-                        {errors.name}
-                      </span>
-                    )}
+
+                    {fieldError('name')}
                   </div>
 
                   <div className="form-group">
                     <label htmlFor="email" className="form-label">
-                      <span>Email <span className="form-req">*</span></span>
+                      <span>
+                        Email <span className="form-req">*</span>
+                      </span>
                     </label>
+
                     <input
                       type="email"
                       id="email"
@@ -383,24 +580,23 @@ export default function ContactSection() {
                       className={`input ${errors.email ? 'input-error' : ''}`}
                       aria-required="true"
                       aria-invalid={!!errors.email}
-                      aria-describedby={errors.email ? 'email-error' : undefined}
+                      aria-describedby={
+                        errors.email ? 'email-error' : undefined
+                      }
+                      autoComplete="email"
                       disabled={status === 'loading'}
                     />
-                    {errors.email && (
-                      <span id="email-error" className="form-error-text" role="alert">
-                        <AlertCircle size={12} aria-hidden="true" />
-                        {errors.email}
-                      </span>
-                    )}
+
+                    {fieldError('email')}
                   </div>
                 </div>
 
-                {/* Phone & Company */}
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label htmlFor="phone" className="form-label">
-                      <span>Phone / WhatsApp</span>
+                      Phone / WhatsApp
                     </label>
+
                     <input
                       type="tel"
                       id="phone"
@@ -409,14 +605,16 @@ export default function ContactSection() {
                       onChange={handleChange}
                       placeholder="+91 98765 43210"
                       className="input"
+                      autoComplete="tel"
                       disabled={status === 'loading'}
                     />
                   </div>
 
                   <div className="form-group">
                     <label htmlFor="company" className="form-label">
-                      <span>Company / Business</span>
+                      Company / Business
                     </label>
+
                     <input
                       type="text"
                       id="company"
@@ -425,17 +623,20 @@ export default function ContactSection() {
                       onChange={handleChange}
                       placeholder="Your company or project name"
                       className="input"
+                      autoComplete="organization"
                       disabled={status === 'loading'}
                     />
                   </div>
                 </div>
 
-                {/* Project Type & Current URL */}
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label htmlFor="projectType" className="form-label">
-                      <span>Project Type <span className="form-req">*</span></span>
+                      <span>
+                        Project Type <span className="form-req">*</span>
+                      </span>
                     </label>
+
                     <select
                       id="projectType"
                       name="projectType"
@@ -445,9 +646,9 @@ export default function ContactSection() {
                       aria-required="true"
                       disabled={status === 'loading'}
                     >
-                      {projectTypeOptions.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
+                      {projectTypeOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
                         </option>
                       ))}
                     </select>
@@ -455,8 +656,9 @@ export default function ContactSection() {
 
                   <div className="form-group">
                     <label htmlFor="currentUrl" className="form-label">
-                      <span>Current Website / App URL</span>
+                      Current Website / App URL
                     </label>
+
                     <input
                       type="url"
                       id="currentUrl"
@@ -464,51 +666,64 @@ export default function ContactSection() {
                       value={formData.currentUrl}
                       onChange={handleChange}
                       placeholder="https://example.com"
-                      className="input"
+                      className={`input ${
+                        errors.currentUrl ? 'input-error' : ''
+                      }`}
+                      aria-invalid={!!errors.currentUrl}
+                      aria-describedby={
+                        errors.currentUrl ? 'currentUrl-error' : undefined
+                      }
                       disabled={status === 'loading'}
                     />
+
+                    {fieldError('currentUrl')}
                   </div>
                 </div>
 
-                {/* Description */}
                 <div className="form-group">
                   <label htmlFor="description" className="form-label">
-                    <span>What do you want to build? <span className="form-req">*</span></span>
-                    <span className="form-hint">Goals, users, key features</span>
+                    <span>
+                      What do you want to build?{' '}
+                      <span className="form-req">*</span>
+                    </span>
+                    <span className="form-hint">
+                      Goals, users, key features
+                    </span>
                   </label>
+
                   <textarea
                     id="description"
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
                     placeholder="Describe your idea, desired features, reference products, or problem statement..."
-                    className={`textarea ${errors.description ? 'input-error' : ''}`}
+                    className={`textarea ${
+                      errors.description ? 'input-error' : ''
+                    }`}
                     aria-required="true"
                     aria-invalid={!!errors.description}
-                    aria-describedby={errors.description ? 'description-error' : undefined}
+                    aria-describedby={
+                      errors.description ? 'description-error' : undefined
+                    }
                     disabled={status === 'loading'}
                   />
-                  {errors.description && (
-                    <span id="description-error" className="form-error-text" role="alert">
-                      <AlertCircle size={12} aria-hidden="true" />
-                      {errors.description}
-                    </span>
-                  )}
+
+                  {fieldError('description')}
                 </div>
 
-                {/* Timeline & Budget */}
                 <div className="form-grid-2">
                   <div className="form-group">
                     <label htmlFor="timeline" className="form-label">
-                      <span>Preferred Timeline</span>
+                      Preferred Timeline
                     </label>
+
                     <input
                       type="text"
                       id="timeline"
                       name="timeline"
                       value={formData.timeline}
                       onChange={handleChange}
-                      placeholder="e.g., ~3 Weeks, 1 month, flexible"
+                      placeholder="e.g., 3 weeks, 1 month, flexible"
                       className="input"
                       disabled={status === 'loading'}
                     />
@@ -519,6 +734,7 @@ export default function ContactSection() {
                       <span>Budget Range</span>
                       <span className="form-hint">Private discussion</span>
                     </label>
+
                     <input
                       type="text"
                       id="budget"
@@ -531,25 +747,29 @@ export default function ContactSection() {
                   </div>
                 </div>
 
-                {/* Additional Requirements */}
                 <div className="form-group">
-                  <label htmlFor="additionalRequirements" className="form-label">
+                  <label
+                    htmlFor="additionalRequirements"
+                    className="form-label"
+                  >
                     <span>Additional Requirements</span>
-                    <span className="form-hint">Integrations, compliance, hosting</span>
+                    <span className="form-hint">
+                      Integrations, compliance, hosting
+                    </span>
                   </label>
+
                   <input
                     type="text"
                     id="additionalRequirements"
                     name="additionalRequirements"
                     value={formData.additionalRequirements}
                     onChange={handleChange}
-                    placeholder="e.g., Need Firebase auth, WhatsApp API, payment gateway"
+                    placeholder="e.g., Firebase auth, WhatsApp API, payment gateway"
                     className="input"
                     disabled={status === 'loading'}
                   />
                 </div>
 
-                {/* Primary Submit Action */}
                 <div style={{ marginTop: '16px' }}>
                   <button
                     ref={submitBtnRef}
@@ -588,8 +808,18 @@ export default function ContactSection() {
                       gap: '6px',
                     }}
                   >
-                    <Mail size={13} style={{ color: 'var(--color-brand-primary)', flexShrink: 0 }} aria-hidden="true" />
-                    <span>Inquiries are dispatched directly to <strong>{RECIPIENT_EMAIL}</strong></span>
+                    <Mail
+                      size={13}
+                      style={{
+                        color: 'var(--color-brand-primary)',
+                        flexShrink: 0,
+                      }}
+                      aria-hidden="true"
+                    />
+                    <span>
+                      Inquiries are sent to{' '}
+                      <strong>{RECIPIENT_EMAIL}</strong>
+                    </span>
                   </p>
                 </div>
               </form>
